@@ -55,24 +55,16 @@ descriptiva_inicial <- DF_work |>
     incontinence_cat = case_when(
       IN_URINARIA == 1 & IN_FECAL == 1 ~ "Fecal and urinary",
       IN_URINARIA == 0 & IN_FECAL == 0 ~ "None",
-      IN_URINARIA == 0 & IN_FECAL == 1 ~ "Only Fecal",
-      IN_URINARIA == 1 & IN_FECAL == 0 ~ "Only Urinary",
-      IN_URINARIA == 1 ~ "Urinary",
-      IN_FECAL == 1 ~ "Fecal",
-      TRUE ~ NA_character_ ## que pasa con los que tienen NA en alguna de las dos variables?
+      IN_URINARIA == 1                 ~ "Urinary", # Captura 1 & 0, y 1 & NA
+      IN_FECAL == 1                    ~ "Fecal",   # Captura 0 & 1, y NA & 1
+      TRUE                             ~ NA_character_ # Captura 0 & NA, NA & 0, y NA & NA
+      # que pasa con los que tienen NA en alguna de las dos variables?
     ),
-
-    # convertir a factor con niveles originales
-    incontinence_cat = factor(
-      incontinence_cat, levels = c(
-        "Fecal and urinary", "Only Fecal", "Only Urinary", "Fecal", "Urinary", "None"
-        )
-      ),
     
-    # agrupar los niveles del factor
-    incontinence_cat = fct_collapse(incontinence_cat,
-                                    "Fecal" = c("Only Fecal", "Fecal"),
-                                    "Urinary" = c("Only Urinary", "Urinary")
+    # Convertir a factor directamente con los niveles finales
+    incontinence_cat = factor(
+      incontinence_cat, 
+      levels = c("Fecal and urinary", "Fecal", "Urinary", "None")
     ),
     
     # Riesgo social GIJON > 11 ??
@@ -145,4 +137,4 @@ estimador[["descr"]] <- matrix_final
 
 # exportar a word ---------------------------------------------------------
 dir.create("results", recursive = TRUE)
-export2word(estimador, file = file.path(getwd(), "results", "Table_1_Draft.docx"))
+export2word(estimador, file = file.path(getwd(), "results", "Table1_descriptiva.docx"))
