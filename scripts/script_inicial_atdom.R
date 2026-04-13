@@ -6,6 +6,13 @@ library(labelled)
 load("data/DF_work.RData")
 DF_work <- DF_work |> as_tibble()
 
+# load data 2
+load("data/DF_work2.RData")
+DF_work_2 <- DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR)
+
+# join
+DF_work <- DF_work |> left_join(DF_work_2, by = "ID")
+
 # inspeccion inicial ------------------------------------------------------
 
 DF_work |> 
@@ -19,8 +26,9 @@ DF_work |>
 # prepare dataframe for descriptive table ---------------------------------
 
 vars_tabla <- c(
-  "USUA_SEXE", "EDAT", "TIME_FOLLOW_UP_TOTAL", "ESTRATGMA", 
-  "BARTHEL", "PFEIFFER", "IN_URINARIA", "IN_FECAL", "GIJON", 
+  "ATDOM", "USUA_SEXE", "EDAT", "TIME_FOLLOW_UP_TOTAL", "ESTRATGMA", 
+  "C_GMA_N_CRONIQUES", "BARTHEL", "PFEIFFER", "IN_URINARIA", "IN_FECAL", 
+  "GIJON", "VC_VIU_SOL_VALOR", "VC_ADEQ_LLAR_VALOR",
   "DOMICILI_INF_TOT", "TOTAL_VISITS_INF", "UPC_TOTAL_INF", 
   "DOMICILI_MF_TOT", "TOTAL_VISITS_MF", "UPC_TOTAL_MF"
 )
@@ -32,7 +40,7 @@ descriptiva_inicial <- DF_work |>
     sex_female = factor(ifelse(USUA_SEXE == "D", "Yes", "No")),
     
     # Años en el programa (asumiendo que TIME_FOLLOW_UP_TOTAL son días)
-    years_home_based = TIME_FOLLOW_UP_TOTAL / 365.25,
+    years_home_based = as.numeric((as.Date("2024-12-16") - ATDOM) / 365.25),
     
     # Alta comorbilidad (Estratos 3 y 4 de GMA)
     high_comorbidity = factor(ifelse(ESTRATGMA %in% c(3, 4), "Yes", "No")),
@@ -70,6 +78,20 @@ descriptiva_inicial <- DF_work |>
     # Riesgo social GIJON > 11 ??
     social_risk = factor(ifelse(GIJON > 11, "Yes", "No")),
     
+    # living alone
+    living_alone = factor(
+      VC_VIU_SOL_VALOR,
+      levels = c("No viu sol/a", "Viu sol/a"),
+      labels = c("No", "Yes")
+    ),
+    
+    # need house hold adaptation
+    need_household_adapt = factor(
+      VC_ADEQ_LLAR_VALOR,
+      levels = c("Cal actuar en alguna de les millores descrites", "No precisa cap de les millores descrites"),
+      labels = c("Yes", "No")
+    ),
+    
     # Continuidad asistencial (CoC) a porcentajes
     coc_nurse = UPC_TOTAL_INF * 100,
     coc_physician = UPC_TOTAL_MF * 100
@@ -77,10 +99,11 @@ descriptiva_inicial <- DF_work |>
 
 descriptiva_inicial <- descriptiva_inicial |> 
   select(!c(
-    USUA_SEXE, TIME_FOLLOW_UP_TOTAL, ESTRATGMA, BARTHEL, PFEIFFER, 
-    IN_URINARIA, IN_FECAL, GIJON, 
+    ATDOM, USUA_SEXE, TIME_FOLLOW_UP_TOTAL, ESTRATGMA, BARTHEL, PFEIFFER, 
+    IN_URINARIA, IN_FECAL, GIJON, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR,
     UPC_TOTAL_INF, UPC_TOTAL_MF
   )) |> 
+  relocate(C_GMA_N_CRONIQUES, .after = high_comorbidity) |> 
   relocate(c(DOMICILI_INF_TOT, TOTAL_VISITS_INF), .before = coc_nurse) |> 
   relocate(c(DOMICILI_MF_TOT, TOTAL_VISITS_MF), .before = coc_physician)
 
@@ -89,20 +112,23 @@ descriptiva_inicial <- descriptiva_inicial |>
 
 # poner etiquetas para la tabla final
 etiquetas <- list(
-  sex_female       = "Sex, female, No. (%)",
-  EDAT             = "Age, y, mean (SD)",
-  years_home_based = "Years in home-based program, mean (SD)",
-  high_comorbidity = "High comorbidity status (AMG index ≥p85), No. (%)",
-  barthel_cat      = "Dependency according to Barthel Index for Activities of Daily Living, No. (%)",
-  pfeiffer_cat     = "Short Portable Mental Status Questionnaire, No. (%)",
-  incontinence_cat = "Incontinence, No. (%)",
-  social_risk      = "Social risk, No. (%)",
-  DOMICILI_INF_TOT = "Home-based visits, mean (SD)",
-  TOTAL_VISITS_INF = "All visits (telephone and come based), mean (SD)",
-  coc_nurse        = "CoC-assigned PHC nurse, % (SD)",
-  DOMICILI_MF_TOT  = "Home-based visits, mean (SD)",
-  TOTAL_VISITS_MF  = "All visits (telephone and come based), mean (SD)",
-  coc_physician    = "CoC-assigned physician, % (SD)"
+  sex_female           = "Sex, female",
+  EDAT                 = "Age, y",
+  years_home_based     = "Years in home-based program",
+  high_comorbidity     = "High comorbidity status (AMG index ≥p85)",
+  C_GMA_N_CRONIQUES    = "No. registered chronic diseases",
+  barthel_cat          = "Dependency according to Barthel Index for Activities of Daily Living",
+  pfeiffer_cat         = "Short Portable Mental Status Questionnaire",
+  incontinence_cat     = "Incontinence",
+  social_risk          = "Social risk",
+  living_alone         = "Living alone",
+  need_household_adapt = "Need for any household adaptation",
+  DOMICILI_INF_TOT     = "PHC Nurse - Home-based visits",
+  TOTAL_VISITS_INF     = "PHC Nurse - All visits (telephone and home based)",
+  coc_nurse            = "PHC Nurse - CoC-assigned",
+  DOMICILI_MF_TOT      = "GP - Home-based visits",
+  TOTAL_VISITS_MF      = "GP - All visits (telephone and home based)",
+  coc_physician        = "GP - CoC-assigned"
 )
 
 # Aplicar a todo el dataframe
@@ -110,31 +136,23 @@ var_label(descriptiva_inicial) <- etiquetas
 
 
 # Compare groups
-res <- compareGroups(~ . -ID, data = descriptiva_inicial)
+method <- c(
+  DOMICILI_INF_TOT = 2,
+  TOTAL_VISITS_INF = 2,
+  coc_nurse = 2,
+  DOMICILI_MF_TOT = 2,
+  TOTAL_VISITS_MF = 2,
+  coc_physician = 2
+)
 
-estimador <- createTable(res, hide.no = "no", sd.type = 1)
-estimador_mx <- estimador[["descr"]]
-
-conf_int <- createTable(
-  res, hide.no = "no", sd.type = 1, show.n = FALSE, show.ci = TRUE
+table <- descrTable(
+  ~ . -ID, 
+  data = descriptiva_inicial,
+  method = method,
+  hide.no = "no",
+  include.miss = T,
+  extra.labels = c("","","","")
   )
-conf_int_mx <- conf_int[["descr"]]
-conf_int_mx[, 1] <- conf_int_mx[, 1] |> 
-  sub(pattern = ".+\\[", replacement = "") |> 
-  sub(pattern = "\\]$", replacement = "") |> 
-  sub(pattern = ";", replacement = " - ")
-  
 
-matrix_final <- cbind(estimador_mx, conf_int_mx)
+export2md(table,format="html")
 
-estimador[["descr"]] <- matrix_final
-
-# faltan estas variables para la tabla descriptiva inicial
-# No. registered chronic diseases GMA_N_CRONIQUES
-# Living alone VIU_SOL
-# Need for any household adaptation ADEQ_LLAR
-
-
-# exportar a word ---------------------------------------------------------
-dir.create("results", recursive = TRUE)
-export2word(estimador, file = file.path(getwd(), "results", "Table1_descriptiva.docx"))
