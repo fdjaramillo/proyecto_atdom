@@ -17,6 +17,7 @@ df <- DF_work |>
   left_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR), by = "ID")
 
 # Flujo
+validate_input_data(df, metadata_dict) # valida y lanza warnings/errors
 df <- apply_all_transformations(df, metadata_dict) # transformar
 df <- set_names_to_df(df, metadata_dict) # poner etiquetas
 
