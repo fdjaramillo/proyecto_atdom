@@ -1,23 +1,26 @@
-﻿n,orig_var,target_var,label,type,critical
-1,ID,ID,Patient ID,id,TRUE
-2,USUA_SEXE,sex_female,"Sex, female",factor,TRUE
-3,EDAT,EDAT,"Age, y",numeric,FALSE
-4,ATDOM,years_home_based,Years in home-based program,date_diff,FALSE
-5,ESTRATGMA,high_comorbidity,High comorbidity status (AMG index ≥p85),gma_strat,FALSE
-6,C_GMA_N_CRONIQUES,C_GMA_N_CRONIQUES,No. registered chronic diseases,numeric,FALSE
-7,BARTHEL,barthel_cat,Dependency according to Barthel Index for Activities of Daily Living,barthel,FALSE
-8,PFEIFFER,pfeiffer_cat,Short Portable Mental Status Questionnaire,pfeiffer,FALSE
-9,IN_URINARIA,incontinence_cat,Incontinence,incontinence,FALSE
-10,IN_FECAL,incontinence_cat,Incontinence,incontinence,FALSE
-11,GIJON,social_risk,Social risk,gijon,FALSE
-12,VC_VIU_SOL_VALOR,living_alone,Living alone,logic_cat,FALSE
-13,VC_ADEQ_LLAR_VALOR,need_household_adapt,Need for any household adaptation,logic_cat,FALSE
-14,DOMICILI_INF_TOT,DOMICILI_INF_TOT,PHC Nurse - Home-based visits,numeric,FALSE
-15,TOTAL_VISITS_INF,TOTAL_VISITS_INF,PHC Nurse - All visits (telephone and home based),numeric,FALSE
-16,UPC_TOTAL_INF,coc_nurse,PHC Nurse - CoC-assigned,percentage,FALSE
-17,DOMICILI_MF_TOT,DOMICILI_MF_TOT,GP - Home-based visits,numeric,FALSE
-18,TOTAL_VISITS_MF,TOTAL_VISITS_MF,GP - All visits (telephone and home based),numeric,FALSE
-19,UPC_TOTAL_MF,coc_physician,GP - CoC-assigned,percentage,FALSE
-20,USUA_UAB_UP,USUA_UAB_UP,Healthcare center,uab_name,FALSE
-21,USUA_UAB_UP,organit_atdom_1,organit_atdom_1,uab_org1,FALSE
-22,USUA_UAB_UP,organit_atdom_2,organit_atdom_2,uab_org2,FALSE
+﻿n;orig_var;target_var;label;type;critical
+1;ID;ID;Patient ID;id;TRUE
+2;USUA_SEXE;sex_female;Sex, female;factor;TRUE
+3;EDAT;EDAT;Age, y;numeric;FALSE
+4;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
+5;ESTRATGMA;high_comorbidity;High comorbidity status (AMG index ≥p85);gma_strat;FALSE
+6;C_GMA_N_CRONIQUES;C_GMA_N_CRONIQUES;No. registered chronic diseases;numeric;FALSE
+7;BARTHEL;barthel_cat;Dependency according to Barthel Index for Activities of Daily Living;barthel;FALSE
+8;PFEIFFER;pfeiffer_cat;Short Portable Mental Status Questionnaire;pfeiffer;FALSE
+9;IN_URINARIA;incontinence_cat;Incontinence;incontinence;FALSE
+10;IN_FECAL;incontinence_cat;Incontinence;incontinence;FALSE
+11;GIJON;social_risk;Social risk;gijon;FALSE
+12;VC_VIU_SOL_VALOR;living_alone;Living alone;logic_cat;FALSE
+13;VC_ADEQ_LLAR_VALOR;need_household_adapt;Need for any household adaptation;logic_cat;FALSE
+14;DOMICILI_INF_TOT;DOMICILI_INF_TOT;PHC Nurse - Home-based visits;numeric;FALSE
+15;TOTAL_VISITS_INF;TOTAL_VISITS_INF;PHC Nurse - All visits (telephone and home based);numeric;FALSE
+16;UPC_TOTAL_INF;coc_nurse;PHC Nurse - CoC-assigned;percentage;FALSE
+17;DOMICILI_MF_TOT;DOMICILI_MF_TOT;GP - Home-based visits;numeric;FALSE
+18;TOTAL_VISITS_MF;TOTAL_VISITS_MF;GP - All visits (telephone and home based);numeric;FALSE
+19;UPC_TOTAL_MF;coc_physician;GP - CoC-assigned;percentage;FALSE
+20;USUA_UAB_UP;USUA_UAB_UP;Healthcare center;uab_name;FALSE
+21;USUA_UAB_UP;organit_atdom_1;organit_atdom_1;uab_org1;FALSE
+22;USUA_UAB_UP;organit_atdom_2;organit_atdom_2;uab_org2;FALSE
+24;DOMICILI_CONJ_TOT;DOMICILI_CONJ;GP and PHC nurse - Home-based visits;numeric;FALSE
+24;TOTAL_VISITS_CONJ;TOTAL_VISITS_CONJF;GP and PHC nurse - All visits (telephone and home based);numeric;FALSE
+24;UPC_TOTAL_CONJ;coc_conj;GP and PHC nurse - CoC-assigned;percentage;FALSE
