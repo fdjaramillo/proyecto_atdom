@@ -119,6 +119,14 @@ apply_uab_mapping <- function(x, output_type = "name") {
   }
 }
 
+apply_emergency <- function(df) {
+  if (!all(c("ALTA_UCIES_num", "CUAP_num") %in% colnames(df))) {
+    return(factor(NA))
+  }
+  res <- coalesce(df$ALTA_UCIES_num, 0) + coalesce(df$CUAP_num, 0)
+  return(res)
+}
+
 # orquestador -------------------------------------------------------------
 
 apply_all_transformations <- function(df, dict) {
@@ -152,6 +160,10 @@ apply_all_transformations <- function(df, dict) {
   # 2. Casos especiales multivariable (Incontinencia)
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
+  }
+
+  if ("emergency" %in% dict$type) {
+    df_trans$emergency_visits <- apply_emergency(df)
   }
 
   # 3. Limpieza final: solo columnas target presentes en dict
