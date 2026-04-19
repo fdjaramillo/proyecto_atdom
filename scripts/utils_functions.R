@@ -188,3 +188,26 @@ set_names_to_df <- function(df, dict) {
 
   return(df)
 }
+
+
+# descriptiva enfermedades ------------------------------------------------
+
+get_disease_summary <- function(data, start_var, end_var) {
+  data %>%
+    as_tibble() |>
+    select({{ start_var }}:{{ end_var }}) |>
+    # Conversión masiva: maneja factores y asegura tipo numérico
+    mutate(across(everything(), ~ as.numeric(as.character(.x)))) |>
+    pivot_longer(
+      everything(),
+      names_to = "Variable",
+      values_to = "Valor"
+    ) |>
+    group_by(Variable) |>
+    summarise(
+      N = sum(Valor == 1, na.rm = TRUE),
+      pct = round((N / n()) * 100, 1),
+      .groups = "drop"
+    ) |>
+    arrange(desc(N))
+}
