@@ -2,22 +2,23 @@ library(tidyverse)
 library(compareGroups)
 library(labelled)
 
-# Cargar el diccionario de metadatos desde csv
-metadata_dict <- read_csv2("metadata_dict.csv")
+# Carga de datos raw
+load("data/DF_work.RData")
+load("data/DF_work2.RData")
 
 # Cargar funciones de ayuda
 source("scripts/utils_functions.R")
 
-# Carga de datos
-load("data/DF_work.RData")
-load("data/DF_work2.RData")
+# descriptiva enfermedades ------------------------------------------------
+patologias <- get_disease_summary(DF_work_2, `Abuso de sustancias`, VIH)
 
-names(DF_work_2)
-###Añadir SITUACIÓ_2026 es "D" o "A"
-#### añadir varaibles de 104 a 107  
-#recode en otra variable "ALTA_UCIES_num"+"CUAP_num" Si son NA imputar 0 
-###hacer tablas descriptivas similar a descriptiva_strat_2 y descriptiva_strat_3
+# Cargar el diccionario de metadatos desde csv
+metadata_dict <- read_csv("metadata_dict.csv") |>
+  # eliminar filas con todo NA
+  filter(if_any(everything(), ~ !is.na(.)))
 
+
+# preparar datos para descirptiva -----------------------------------------
 
 df <- DF_work |>
   as_tibble() |>
