@@ -67,13 +67,12 @@ apply_incontinence <- function(df) {
   }
 
   res <- case_when(
-    df$IN_URINARIA == 1 & df$IN_FECAL == 1 ~ "Fecal and urinary",
-    df$IN_URINARIA == 0 & df$IN_FECAL == 0 ~ "None",
-    df$IN_URINARIA == 1 ~ "Urinary",
+    df$IN_FECAL == 1 & df$IN_URINARIA == 1 ~ "Fecal and urinary",
     df$IN_FECAL == 1 ~ "Fecal",
-    TRUE ~ NA_character_
+    df$IN_URINARIA == 1 ~ "Urinary",
+    TRUE ~ "None/None registered"
   )
-  factor(res, levels = c("Fecal and urinary", "Fecal", "Urinary", "None"))
+  factor(res, levels = c("Fecal and urinary", "Fecal", "Urinary", "None/None registered"))
 }
 
 # Transformador Lógica (Viu sol / Adeq llar)
