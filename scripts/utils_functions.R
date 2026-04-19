@@ -133,18 +133,19 @@ apply_all_transformations <- function(df, dict) {
     val <- df[[row$orig_var]]
 
     df_trans[[row$target_var]] <- switch(row$type,
-      "numeric"    = as.numeric(val),
-      "factor"     = factor(ifelse(val == "D", "Yes", "No")), # Específico sexo
-      "date_diff"  = as.numeric((as.Date("2024-12-16") - val) / 365.25),
-      "gma_strat"  = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
-      "barthel"    = apply_barthel(val),
-      "pfeiffer"   = apply_pfeiffer(val),
-      "gijon"      = factor(ifelse(val > 11, "Yes", "No")),
-      "logic_cat"  = apply_logic_cat(val, row$target_var),
-      "percentage" = val * 100,
-      "uab_name"   = apply_uab_mapping(val, "name"),
-      "uab_org1"   = apply_uab_mapping(val, "org1"),
-      "uab_org2"   = apply_uab_mapping(val, "org2"),
+      "numeric"       = as.numeric(val),
+      "factor_status" = factor(ifelse(val == "A", "Yes", "No")), # Específico status
+      "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")), # Específico sexo
+      "date_diff"     = as.numeric((as.Date("2024-12-16") - val) / 365.25),
+      "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
+      "barthel"       = apply_barthel(val),
+      "pfeiffer"      = apply_pfeiffer(val),
+      "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
+      "logic_cat"     = apply_logic_cat(val, row$target_var),
+      "percentage"    = val * 100,
+      "uab_name"      = apply_uab_mapping(val, "name"),
+      "uab_org1"      = apply_uab_mapping(val, "org1"),
+      "uab_org2"      = apply_uab_mapping(val, "org2"),
       df_trans[[row$target_var]] # Default: no tocar
     )
   }
