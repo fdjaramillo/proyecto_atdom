@@ -132,5 +132,39 @@ descriptiva_strat_3_3 <- descrTable(
 export2md(descriptiva_strat_3_3, format = "html")
 
 
+# categorizacion ----------------------------------------------------------
+
+vars <- c("SEM_num", "emergency_visits", "INGRES_num")
+
+df <- df |> 
+  mutate(
+    across(all_of(vars), cat3, .names = "{.col}_cat3"),
+    across(all_of(vars), cat2, .names = "{.col}_cat2")
+  )
+
+descriptiva_strat_2_2_cat <- descrTable(
+  organit_atdom_1 ~ SEM_num_cat2 + emergency_visits_cat2 + INGRES_num_cat2 +
+                    SEM_num_cat3 + emergency_visits_cat3 + INGRES_num_cat3,
+  data = df,
+  method = method,
+  show.all = T,
+  chisq.test.perm = T,
+  hide.no = "no",
+  include.miss = T,
+  extra.labels = c("", "", "", "")
+)
+export2md(descriptiva_strat_2_2_cat, format = "html")
 
 
+descriptiva_strat_3_3_cat <- descrTable(
+  organit_atdom_2 ~ SEM_num_cat2 + emergency_visits_cat2 + INGRES_num_cat2 +
+    SEM_num_cat3 + emergency_visits_cat3 + INGRES_num_cat3,
+  data = df,
+  method = method,
+  show.all = T,
+  chisq.test.perm = T,
+  hide.no = "no",
+  include.miss = T,
+  extra.labels = c("", "", "", "")
+)
+export2md(descriptiva_strat_3_3_cat, format = "html")

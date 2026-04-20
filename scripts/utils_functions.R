@@ -211,3 +211,25 @@ get_disease_summary <- function(data, start_var, end_var) {
     ) |>
     arrange(desc(N))
 }
+
+
+# categorizacion 2 y 3 variables ------------------------------------------
+
+cat3 <- function(x) factor(
+  dplyr::case_when(
+    is.na(x) ~ "0",
+    x == 0   ~ "0",
+    x == 1   ~ "1",
+    x >= 2   ~ "2+"
+  ),
+  levels = c("0","1","2+")
+)
+
+cat2 <- function(x) factor(
+  dplyr::case_when(
+    is.na(x) ~ "0",
+    x == 0   ~ "0",
+    x >= 1   ~ "1+"
+  ),
+  levels = c("0","1+")
+)
