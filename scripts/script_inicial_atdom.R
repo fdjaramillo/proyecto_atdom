@@ -43,8 +43,11 @@ method <- c(
   coc_physician = 2,
   DOMICILI_CONJ = 2,
   TOTAL_VISITS_CONJF = 2,
-  coc_conj = 2
-)
+  coc_conj = 2,
+  SEM_num = 2,
+  emergency_visits= 2,
+  INGRES_num= 2
+  )
 
 # Descritiva todos los pa. Atdom
 
@@ -107,6 +110,7 @@ export2md(descriptiva_strat_3, format = "html")
 descriptiva_strat_2_2 <- descrTable(
   organit_atdom_1 ~ SEM_num + emergency_visits + INGRES_num,
   data = df,
+  method = method,
   show.all = T,
   chisq.test.perm = T,
   hide.no = "no",
@@ -118,6 +122,7 @@ export2md(descriptiva_strat_2_2, format = "html")
 descriptiva_strat_3_3 <- descrTable(
   organit_atdom_2 ~ SEM_num + emergency_visits + INGRES_num,
   data = df,
+  method = method,
   show.all = T,
   chisq.test.perm = T,
   hide.no = "no",
@@ -125,3 +130,7 @@ descriptiva_strat_3_3 <- descrTable(
   extra.labels = c("", "", "", "")
 )
 export2md(descriptiva_strat_3_3, format = "html")
+
+
+
+
