@@ -13,16 +13,16 @@ source("scripts/utils_functions.R")
 patologias <- get_disease_summary(DF_work_2, `Abuso de sustancias`, VIH)
 
 # Cargar el diccionario de metadatos desde csv
-metadata_dict <- read_csv("metadata_dict.csv") |>
+metadata_dict <- read_csv2("metadata_dict.csv") |>
   # eliminar filas con todo NA
   filter(if_any(everything(), ~ !is.na(.)))
-
 
 # preparar datos para descirptiva -----------------------------------------
 
 df <- DF_work |>
   as_tibble() |>
-  left_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR),
+  left_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR,
+                                C_GMA_CODI,PR_MACA_DATA,PR_PCC_DATA),
     by = "ID"
   )
 
@@ -30,7 +30,6 @@ df <- DF_work |>
 validate_input_data(df, metadata_dict) # valida y lanza warnings/errors
 df <- apply_all_transformations(df, metadata_dict) # transformar
 df <- set_names_to_df(df, metadata_dict) # poner etiquetas
-
 
 # compare groups ----------------------------------------------------------
 
@@ -55,6 +54,7 @@ descriptiva <- descrTable(
   ~ . - ID,
   data = df,
   method = method,
+  max.xlev = 25,
   hide.no = "no",
   include.miss = T,
   extra.labels = c("", "", "", "")
@@ -67,6 +67,7 @@ descriptiva_strat_1 <- descrTable(
   USUA_UAB_UP ~ . - ID - organit_atdom_1 - organit_atdom_2,
   data = df,
   max.ylev = 7,
+  max.xlev = 25,
   show.all = T,
   chisq.test.perm = T,
   method = method,

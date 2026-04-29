@@ -52,6 +52,23 @@ apply_barthel <- function(x) {
   )
 }
 
+# Transformador TIRS
+apply_TIRS <- function(x) {
+  case_when(x>0~"si",
+            x==0~"no",
+            TRUE~NA_character_)
+}
+
+# Transformador MACA
+apply_MACA <-  function(x) {
+  factor(ifelse(is.na(x), "no", "si"))
+}
+
+# Transformador PCC
+apply_PCC <- function(x) {
+  factor(ifelse(is.na(x), "no", "si"))
+}
+
 # Transformador Pfeiffer
 apply_pfeiffer <- function(x) {
   cut(x,
@@ -147,6 +164,10 @@ apply_all_transformations <- function(df, dict) {
       "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
       "barthel"       = apply_barthel(val),
       "pfeiffer"      = apply_pfeiffer(val),
+      "PCC"           = apply_PCC(val),
+      "GMA_CODE"      = factor(val),
+      "MACA"          = apply_MACA(val),
+      "TIRS"          = factor(apply_TIRS(val)),
       "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
       "logic_cat"     = apply_logic_cat(val, row$target_var),
       "percentage"    = val * 100,
@@ -156,8 +177,8 @@ apply_all_transformations <- function(df, dict) {
       df_trans[[row$target_var]] # Default: no tocar
     )
   }
-
-  # 2. Casos especiales multivariable (Incontinencia)
+  
+# 2. Casos especiales multivariable (Incontinencia)
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
   }
