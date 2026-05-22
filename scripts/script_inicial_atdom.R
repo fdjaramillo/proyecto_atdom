@@ -22,7 +22,7 @@ metadata_dict <- read_csv2("metadata_dict.csv") |>
 df <- DF_work |>
   as_tibble() |>
   left_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR,
-                                C_GMA_CODI,PR_MACA_DATA,PR_PCC_DATA),
+                                C_GMA_COMPLEXITAT,PR_MACA_DATA,PR_PCC_DATA),
     by = "ID"
   )
 
@@ -155,7 +155,6 @@ descriptiva_strat_2_2_cat <- descrTable(
   extra.labels = c("", "", "", "")
 )
 export2md(descriptiva_strat_2_2_cat, format = "html")
-
 
 descriptiva_strat_3_3_cat <- descrTable(
   organit_atdom_2 ~ SEM_num_cat2 + emergency_visits_cat2 + INGRES_num_cat2 +

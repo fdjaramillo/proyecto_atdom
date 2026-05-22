@@ -6,7 +6,7 @@
 5;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
 6;ESTRATGMA;high_comorbidity;High comorbidity status (AMG index ≥p85);gma_strat;FALSE
 7;C_GMA_N_CRONIQUES;C_GMA_N_CRONIQUES;No. registered chronic diseases;numeric;FALSE
-8;C_GMA_CODI;GMA_CODE;Commorbidity and complexity;GMA_CODE;FALSE
+8;C_GMA_COMPLEXITAT;GMA_CODE;Commorbidity and complexity;GMA_CODE;FALSE
 9;INDEX_FRAGIL_VIG;INDEX_FRAGIL_VIG;Fragil Vig index;numeric;FALSE
 10;PR_PCC_DATA;PCC;PCC;PCC;FALSE
 11;PR_MACA_DATA;MACA;MACA;MACA;FALSE
