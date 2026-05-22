@@ -168,3 +168,76 @@ descriptiva_strat_3_3_cat <- descrTable(
   extra.labels = c("", "", "", "")
 )
 export2md(descriptiva_strat_3_3_cat, format = "html")
+
+###Matching
+install.packages("MatchIt")
+library(MatchIt)
+
+m.out0<- matchit(MIGRANT~ decile+C_GMA_CODI+C_SEXE, data = start,
+                 method = NULL, distance = "glm",ratio = 2)
+summary(m.out0)
+names(df)
+names(DF_work_2)
+df<-df|>
+  left_join(DF_work_2[,c(1,11)],
+            by="ID")
+
+DF_work_2$ESTRATGMA
+df$Age<-ntile(df$Edat,10)
+df$ESTRATGMA<-as.factor(df$ESTRATGMA)
+df$Age<-as.factor(df$Age)
+
+###Check balance
+bal.tab(organit_atdom_2~ ESTRATGMA+Age+sex_female+barthel_cat, 
+        data = df,
+        thresholds = c(m = .05))
+
+###Matching
+library("WeightIt")
+W.out <- weightit(organit_atdom_2~ ESTRATGMA+Age+sex_female+barthel_cat,
+                  data = df,
+                  estimand = "ATO",
+                  method = "glm")
+
+bal.tab(W.out, 
+        stats = "mean.diffs",
+        thresholds = c(m = .05))
+
+summary(W.out) #print the output
+
+love.plot(
+  W.out,
+  abs = TRUE,
+  threshold = 0.05
+)
+
+df_balanced <- df %>%
+  mutate(w_ato = W.out$weights)
+
+df_balanced$GMA_CODE<-as.numeric(df_balanced$GMA_CODE)
+
+modelo_logit_ato <- glm(
+  remain_active ~ organit_atdom_2,
+  data = df_balanced,
+  weights = w_ato,
+  family = binomial()
+)
+
+modelo_logit_ato <- glm(
+  remain_active ~ organit_atdom_2+coc_conj,
+  data = df_balanced,
+  weights = w_ato,
+  family = binomial()
+)
+
+summary(modelo_logit_ato)
+library(survival)
+cox_ato<- coxph(
+  Surv(time_to_event, remain_active) ~ organit_atdom_2,
+  data = df_balanced,
+  weights = w_ato,
+  robust = TRUE
+)
+
+
+
