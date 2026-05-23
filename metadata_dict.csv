@@ -6,7 +6,7 @@
 5;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
 6;ESTRATGMA;high_comorbidity;High comorbidity status (AMG index ≥p85);gma_strat;FALSE
 7;C_GMA_N_CRONIQUES;C_GMA_N_CRONIQUES;No. registered chronic diseases;numeric;FALSE
-8;C_GMA_COMPLEXITAT;GMA_CODE;Commorbidity and complexity;GMA_CODE;FALSE
+8;C_GMA_COMPLEXITAT;GMA_CODE;Commorbidity and complexity;numeric;FALSE
 9;INDEX_FRAGIL_VIG;INDEX_FRAGIL_VIG;Fragil Vig index;numeric;FALSE
 10;PR_PCC_DATA;PCC;PCC;PCC;FALSE
 11;PR_MACA_DATA;MACA;MACA;MACA;FALSE
@@ -27,10 +27,14 @@
 26;DOMICILI_CONJ_TOT;DOMICILI_CONJ;GP and PHC nurse - Home-based visits;numeric;FALSE
 27;TOTAL_VISITS_CONJ;TOTAL_VISITS_CONJF;GP and PHC nurse - All visits (telephone and home based);numeric;FALSE
 28;UPC_TOTAL_CONJ;coc_conj;GP and PHC nurse - CoC-assigned;percentage;FALSE
-29;SEM_num;SEM_num;SEM_num;numeric;FALSE
+29;SEM_num;SEM_num;SEM_num;SEM_num;FALSE
 30;ALTA_UCIES_num;emergency_visits;emergency_visits;emergency;FALSE
 31;CUAP_num;emergency_visits;emergency_visits;emergency;FALSE
-32;INGRES_num;INGRES_num;INGRES_num;numeric;FALSE
+32;INGRES_num;INGRES_num;INGRES_num;INGRES_num;FALSE
 33;USUA_UAB_UP;USUA_UAB_UP;Healthcare center;uab_name;FALSE
 34;USUA_UAB_UP;organit_atdom_1;organit_atdom_1;uab_org1;FALSE
 35;USUA_UAB_UP;organit_atdom_2;organit_atdom_2;uab_org2;FALSE
+36;TIME_FOLLOW_UP_TOTAL;Time_follow_up_total;Time_follow_up_total;Time_follow_up_total;FALSE
+37;TIME_FOLLOW_UP_SEM;Time_follow_up_ambulance;Time_follow_up_ambulance;Time_follow_up_ambulance;FALSE
+38;TIME_FOLLOW_UP_UCIES;Time_follow_up_emergency_d;Time_follow_up_emergency_d;Time_follow_up_emergency_d;FALSE
+39;TIME_FOLLOW_UP_INGRES;Time_follow_up_hospital_admission;Time_follow_up_hospital_admission;Time_follow_up_hospital_admission;FALSE

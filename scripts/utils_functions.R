@@ -165,7 +165,7 @@ apply_all_transformations <- function(df, dict) {
       "barthel"       = apply_barthel(val),
       "pfeiffer"      = apply_pfeiffer(val),
       "PCC"           = apply_PCC(val),
-      "GMA_CODE"      = factor(val),
+      "GMA_CODE"      = numeric(val),
       "MACA"          = apply_MACA(val),
       "TIRS"          = factor(apply_TIRS(val)),
       "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
@@ -174,10 +174,18 @@ apply_all_transformations <- function(df, dict) {
       "uab_name"      = apply_uab_mapping(val, "name"),
       "uab_org1"      = apply_uab_mapping(val, "org1"),
       "uab_org2"      = apply_uab_mapping(val, "org2"),
+      "SEM_num"       = ifelse(is.na(val), 0, val), # Si Na, 0
+      "ALTA_UCIES_num"= ifelse(is.na(val), 0, val), # Si Na, 0
+      "CUAP_num"      = ifelse(is.na(val), 0, val), # Si Na, 0
+      "INGRES_num"    = ifelse(is.na(val), 0, val), # Si Na, 0
+      "Time_follow_up_ambulance"             = ifelse(is.na(val), 407, val), # Si Na, 407
+      "Time_follow_up_emergency_d"           = ifelse(is.na(val), 407, val), # Si Na, 407
+      "Time_follow_up_hospital_admission"    = ifelse(is.na(val), 407, val), # Si Na, 407
+      
       df_trans[[row$target_var]] # Default: no tocar
     )
   }
-  
+names(df)  
 # 2. Casos especiales multivariable (Incontinencia)
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
@@ -254,3 +262,94 @@ cat2 <- function(x) factor(
   ),
   levels = c("0","1+")
 )
+
+###### Modelos #######
+
+run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes,
+                                 exposure, weights_var, adjust_vars = NULL) {
+  
+  rhs <- if (is.null(adjust_vars) || length(adjust_vars) == 0) {
+    exposure
+  } else {
+    paste(c(exposure, adjust_vars), collapse = " + ")
+  }
+  
+  keep_exposure_terms <- function(df) {
+    df %>%
+      dplyr::filter(term == exposure | startsWith(term, paste0(exposure)))
+  }
+  
+  results_continuous <- purrr::map_dfr(continuous_outcomes, function(outcome) {
+    
+    formula_model <- as.formula(paste(outcome, "~", rhs))
+    
+    model <- glm(
+      formula_model,
+      data = data,
+      weights = data[[weights_var]],
+      family = gaussian()
+    )
+    
+    broom::tidy(model, conf.int = TRUE) %>%
+      keep_exposure_terms() %>%
+      mutate(
+        term = gsub(paste0("^", exposure), "", term),
+        outcome = outcome,
+        model_type = "Gaussian",
+        measure = "Beta",
+        n = stats::nobs(model),
+        estimate_final = estimate,
+        conf.low_final = conf.low,
+        conf.high_final = conf.high
+      )
+  })
+  
+  results_categorical <- purrr::map_dfr(categorical_outcomes, function(outcome) {
+    
+    formula_model <- as.formula(paste(outcome, "~", rhs))
+    
+    model <- glm(
+      formula_model,
+      data = data,
+      weights = data[[weights_var]],
+      family = binomial()
+    )
+    
+    broom::tidy(model, conf.int = TRUE, exponentiate = TRUE) %>%
+      keep_exposure_terms() %>%
+      mutate(
+        term = gsub(paste0("^", exposure), "", term),
+        outcome = outcome,
+        model_type = "Logistic",
+        measure = "OR",
+        n = stats::nobs(model),
+        estimate_final = estimate,
+        conf.low_final = conf.low,
+        conf.high_final = conf.high
+      )
+  })
+  
+  bind_rows(results_continuous, results_categorical) %>%
+    mutate(
+      model_formula = paste0(outcome, " ~ ", rhs),
+      result = paste0(
+        round(estimate_final, 2),
+        " (",
+        round(conf.low_final, 2),
+        "; ",
+        round(conf.high_final, 2),
+        ")"
+      ),
+      p.value = signif(p.value, 3)
+    ) %>%
+    select(
+      outcome,
+      model_type,
+      measure,
+      term,
+      n,
+      result,
+      p.value,
+      model_formula
+    )
+}

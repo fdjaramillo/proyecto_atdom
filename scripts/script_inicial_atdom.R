@@ -169,32 +169,28 @@ descriptiva_strat_3_3_cat <- descrTable(
 )
 export2md(descriptiva_strat_3_3_cat, format = "html")
 
-###Matching
-install.packages("MatchIt")
-library(MatchIt)
+###Balancing
+library("WeightIt")
+library("cobalt")
 
-m.out0<- matchit(MIGRANT~ decile+C_GMA_CODI+C_SEXE, data = start,
-                 method = NULL, distance = "glm",ratio = 2)
-summary(m.out0)
-names(df)
-names(DF_work_2)
+
+
+df<-df%>%
+  mutate(Age=factor(ntile(df$Edat,10)),
+         GMA_CODE_quantile=factor(ntile(df$GMA_CODE,10)
+                                  )
+                            )
+
 df<-df|>
   left_join(DF_work_2[,c(1,11)],
             by="ID")
 
-DF_work_2$ESTRATGMA
-df$Age<-ntile(df$Edat,10)
-df$ESTRATGMA<-as.factor(df$ESTRATGMA)
-df$Age<-as.factor(df$Age)
-
 ###Check balance
-bal.tab(organit_atdom_2~ ESTRATGMA+Age+sex_female+barthel_cat, 
+bal.tab(organit_atdom_2~ GMA_CODE_quantile+Age+sex_female+barthel_cat, 
         data = df,
         thresholds = c(m = .05))
 
-###Matching
-library("WeightIt")
-W.out <- weightit(organit_atdom_2~ ESTRATGMA+Age+sex_female+barthel_cat,
+W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age+sex_female+barthel_cat,
                   data = df,
                   estimand = "ATO",
                   method = "glm")
@@ -204,6 +200,7 @@ bal.tab(W.out,
         thresholds = c(m = .05))
 
 summary(W.out) #print the output
+names(df_balanced)
 
 love.plot(
   W.out,
@@ -214,23 +211,39 @@ love.plot(
 df_balanced <- df %>%
   mutate(w_ato = W.out$weights)
 
-df_balanced$GMA_CODE<-as.numeric(df_balanced$GMA_CODE)
-
-modelo_logit_ato <- glm(
-  remain_active ~ organit_atdom_2,
-  data = df_balanced,
-  weights = w_ato,
-  family = binomial()
+continous_outcomes <- c("INGRES_num", "SEM_num", "emergency_visits")
+cat_outcomes <- c(
+  "emergency_visits_cat2",
+  "SEM_num_cat2",
+  "INGRES_num_cat2",
+  "remain_active"
 )
 
-modelo_logit_ato <- glm(
-  remain_active ~ organit_atdom_2+coc_conj,
+names(df_balanced)
+
+#### Crudo
+results_all <- run_models_automatic(
   data = df_balanced,
-  weights = w_ato,
-  family = binomial()
+  continuous_outcomes = continous_outcomes,
+  categorical_outcomes = cat_outcomes,
+  exposure = "organit_atdom_2",
+  weights_var = "w_ato"
 )
 
-summary(modelo_logit_ato)
+print(n = 21,results_all)
+
+#### Adjusted
+results_adjusted <- run_models_automatic(
+  data = df_balanced,
+  continuous_outcomes = continous_outcomes,
+  categorical_outcomes = cat_outcomes,
+  exposure = "organit_atdom_2",
+  weights_var = "w_ato",
+  adjust_vars = c("Edat", "sex_female","GMA_CODE")
+)
+
+print(n = 21,results_adjusted)
+
 library(survival)
 cox_ato<- coxph(
   Surv(time_to_event, remain_active) ~ organit_atdom_2,
