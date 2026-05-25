@@ -1,6 +1,9 @@
 library(tidyverse)
 library(compareGroups)
 library(labelled)
+library(WeightIt)
+library(cobalt)
+
 
 # Carga de datos raw
 load("data/DF_work.RData")
@@ -170,27 +173,29 @@ descriptiva_strat_3_3_cat <- descrTable(
 export2md(descriptiva_strat_3_3_cat, format = "html")
 
 ###Balancing
-library("WeightIt")
-library("cobalt")
-
-
+names(df)
 
 df<-df%>%
-  mutate(Age=factor(ntile(df$Edat,10)),
+  mutate(Age_quantile=factor(ntile(df$Edat,10)),
          GMA_CODE_quantile=factor(ntile(df$GMA_CODE,10)
                                   )
-                            )
-
+                      )
 df<-df|>
   left_join(DF_work_2[,c(1,11)],
             by="ID")
 
+df<-df|>
+  left_join(DF_work[,c(1,25)],
+            by="ID")
+
+
 ###Check balance
-bal.tab(organit_atdom_2~ GMA_CODE_quantile+Age+sex_female+barthel_cat, 
+names(DF_work$TIRS)
+bal.tab(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS.y, 
         data = df,
         thresholds = c(m = .05))
 
-W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age+sex_female+barthel_cat,
+W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS.y,
                   data = df,
                   estimand = "ATO",
                   method = "glm")
@@ -210,6 +215,8 @@ love.plot(
 
 df_balanced <- df %>%
   mutate(w_ato = W.out$weights)
+
+names(df_balanced)
 
 continous_outcomes <- c("INGRES_num", "SEM_num", "emergency_visits")
 cat_outcomes <- c(
@@ -239,7 +246,7 @@ results_adjusted <- run_models_automatic(
   categorical_outcomes = cat_outcomes,
   exposure = "organit_atdom_2",
   weights_var = "w_ato",
-  adjust_vars = c("Edat", "sex_female","GMA_CODE")
+  adjust_vars = c("Edat", "sex_female","GMA_CODE","TIRS.y")
 )
 
 print(n = 21,results_adjusted)

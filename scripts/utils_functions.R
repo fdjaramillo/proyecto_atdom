@@ -312,7 +312,7 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
       formula_model,
       data = data,
       weights = data[[weights_var]],
-      family = binomial()
+      family = quasibinomial()
     )
     
     broom::tidy(model, conf.int = TRUE, exponentiate = TRUE) %>%
