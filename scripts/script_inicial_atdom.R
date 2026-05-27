@@ -236,5 +236,11 @@ results_adjusted <- run_models_automatic(
 
 print(n = 21,results_adjusted)
 
+<<<<<<< HEAD
+=======
+
+
+
+>>>>>>> 7513014e83bf37f8f9c2942f1594f7aa4c6709e9
 
 
