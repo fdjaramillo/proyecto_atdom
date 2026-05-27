@@ -3,7 +3,8 @@ library(compareGroups)
 library(labelled)
 library(WeightIt)
 library(cobalt)
-
+library(broom)
+library(purrr)
 
 # Carga de datos raw
 load("data/DF_work.RData")
@@ -173,29 +174,18 @@ descriptiva_strat_3_3_cat <- descrTable(
 export2md(descriptiva_strat_3_3_cat, format = "html")
 
 ###Balancing
-names(df)
+summary(df)
 
 df<-df%>%
   mutate(Age_quantile=factor(ntile(df$Edat,10)),
-         GMA_CODE_quantile=factor(ntile(df$GMA_CODE,10)
-                                  )
-                      )
-df<-df|>
-  left_join(DF_work_2[,c(1,11)],
-            by="ID")
-
-df<-df|>
-  left_join(DF_work[,c(1,25)],
-            by="ID")
-
+         GMA_CODE_quantile=factor(ntile(df$GMA_CODE,10)))
 
 ###Check balance
-names(DF_work$TIRS)
-bal.tab(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS.y, 
+bal.tab(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS_num+incontinence_cat+MACA+PCC, 
         data = df,
         thresholds = c(m = .05))
 
-W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS.y,
+W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+barthel_cat+TIRS_num+incontinence_cat+MACA+PCC,
                   data = df,
                   estimand = "ATO",
                   method = "glm")
@@ -205,7 +195,6 @@ bal.tab(W.out,
         thresholds = c(m = .05))
 
 summary(W.out) #print the output
-names(df_balanced)
 
 love.plot(
   W.out,
@@ -216,17 +205,13 @@ love.plot(
 df_balanced <- df %>%
   mutate(w_ato = W.out$weights)
 
-names(df_balanced)
-
 continous_outcomes <- c("INGRES_num", "SEM_num", "emergency_visits")
 cat_outcomes <- c(
   "emergency_visits_cat2",
   "SEM_num_cat2",
   "INGRES_num_cat2",
-  "remain_active"
+  "Exitus"
 )
-
-names(df_balanced)
 
 #### Crudo
 results_all <- run_models_automatic(
@@ -246,18 +231,10 @@ results_adjusted <- run_models_automatic(
   categorical_outcomes = cat_outcomes,
   exposure = "organit_atdom_2",
   weights_var = "w_ato",
-  adjust_vars = c("Edat", "sex_female","GMA_CODE","TIRS.y")
+  adjust_vars = c("Edat", "sex_female","GMA_CODE","TIRS_num","living_alone","barthel_cat","PCC","MACA")
 )
 
 print(n = 21,results_adjusted)
-
-library(survival)
-cox_ato<- coxph(
-  Surv(time_to_event, remain_active) ~ organit_atdom_2,
-  data = df_balanced,
-  weights = w_ato,
-  robust = TRUE
-)
 
 
 

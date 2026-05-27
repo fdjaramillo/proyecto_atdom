@@ -95,13 +95,16 @@ apply_incontinence <- function(df) {
 # Transformador Lógica (Viu sol / Adeq llar)
 apply_logic_cat <- function(x, target_name) {
   if (target_name == "living_alone") {
-    return(factor(x, levels = c("No viu sol/a", "Viu sol/a"), labels = c("No", "Yes")))
+  x <- if_else(is.na(x),"No viu sol/a",as.character(x))
+  return(factor(x, levels = c("No viu sol/a", "Viu sol/a"), labels = c("No", "Yes")))
   }
   if (target_name == "need_household_adapt") {
-    return(factor(x, levels = c("Cal actuar en alguna de les millores descrites", "No precisa cap de les millores descrites"), labels = c("Yes", "No")))
+  x <- if_else(is.na(x),"No precisa cap de les millores descrites",as.character(x))
+  return(factor(x, levels = c("Cal actuar en alguna de les millores descrites", "No precisa cap de les millores descrites"), labels = c("Yes", "No")))
   }
   return(x)
 }
+
 
 # transformador UAB
 apply_uab_mapping <- function(x, output_type = "name") {
@@ -148,6 +151,7 @@ apply_emergency <- function(df) {
 
 apply_all_transformations <- function(df, dict) {
   df_trans <- df
+  
 
   # 1. Transformaciones directas columna a columna
   for (i in 1:nrow(dict)) {
@@ -162,12 +166,14 @@ apply_all_transformations <- function(df, dict) {
       "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")), # Específico sexo
       "date_diff"     = as.numeric((as.Date("2024-12-16") - val) / 365.25),
       "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
+      "GMA_groups"    = as.factor(val),
       "barthel"       = apply_barthel(val),
       "pfeiffer"      = apply_pfeiffer(val),
       "PCC"           = apply_PCC(val),
       "GMA_CODE"      = numeric(val),
       "MACA"          = apply_MACA(val),
-      "TIRS"          = factor(apply_TIRS(val)),
+      "TIRS_cat"      = factor(apply_TIRS(val)),
+      "TIRS"          = numeric(val),
       "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
       "logic_cat"     = apply_logic_cat(val, row$target_var),
       "percentage"    = val * 100,
@@ -265,7 +271,7 @@ cat2 <- function(x) factor(
 
 ###### Modelos #######
 
-run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes,
+run_models_automatic<- function(data, continuous_outcomes, categorical_outcomes,
                                  exposure, weights_var, adjust_vars = NULL) {
   
   rhs <- if (is.null(adjust_vars) || length(adjust_vars) == 0) {
@@ -276,10 +282,10 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
   
   keep_exposure_terms <- function(df) {
     df %>%
-      dplyr::filter(term == exposure | startsWith(term, paste0(exposure)))
+      filter(term == exposure | startsWith(term, paste0(exposure)))
   }
   
-  results_continuous <- purrr::map_dfr(continuous_outcomes, function(outcome) {
+  results_continuous <- map_dfr(continuous_outcomes, function(outcome) {
     
     formula_model <- as.formula(paste(outcome, "~", rhs))
     
@@ -290,7 +296,7 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
       family = gaussian()
     )
     
-    broom::tidy(model, conf.int = TRUE) %>%
+    tidy(model, conf.int = TRUE) %>%
       keep_exposure_terms() %>%
       mutate(
         term = gsub(paste0("^", exposure), "", term),
@@ -303,8 +309,8 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
         conf.high_final = conf.high
       )
   })
-  
-  results_categorical <- purrr::map_dfr(categorical_outcomes, function(outcome) {
+
+  results_categorical <- map_dfr(categorical_outcomes, function(outcome) {
     
     formula_model <- as.formula(paste(outcome, "~", rhs))
     
@@ -315,7 +321,7 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
       family = quasibinomial()
     )
     
-    broom::tidy(model, conf.int = TRUE, exponentiate = TRUE) %>%
+    tidy(model, conf.int = TRUE, exponentiate = TRUE) %>%
       keep_exposure_terms() %>%
       mutate(
         term = gsub(paste0("^", exposure), "", term),
@@ -353,3 +359,37 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
       model_formula
     )
 }
+
+###SF DATA
+library(sf)
+Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
+
+download.file(
+  url = Adreces_json,
+  destfile = "data/adreces.csv",
+  mode = "wb"
+)
+
+BCN_adreces<- st_read("data/adreces.csv")
+
+BCN_adreces<- BCN_adreces %>%
+  mutate(
+    x_etrs89 = na_if(x_etrs89, ""),
+    y_etrs89 = na_if(y_etrs89, ""),
+    x_etrs89 = as.numeric(x_etrs89),
+    y_etrs89 = as.numeric(y_etrs89)
+  ) %>%
+  filter(
+    !is.na(x_etrs89),
+    !is.na(y_etrs89)
+  )%>%
+  st_as_sf(
+    .,
+    coords = c("x_etrs89", "y_etrs89"),
+    crs = 25831,
+    remove = FALSE
+  )
+
+BCN_adreces<-BCN_adreces %>%
+  mutate(nom_carrer=toupper(nom_carrer))
+
