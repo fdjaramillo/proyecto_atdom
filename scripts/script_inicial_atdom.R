@@ -251,13 +251,8 @@ results_adjusted <- run_models_automatic(
 
 print(n = 21,results_adjusted)
 
-library(survival)
-cox_ato<- coxph(
-  Surv(time_to_event, remain_active) ~ organit_atdom_2,
-  data = df_balanced,
-  weights = w_ato,
-  robust = TRUE
-)
+
+
 
 
 
