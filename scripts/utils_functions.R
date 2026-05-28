@@ -362,10 +362,10 @@ run_models_automatic<- function(data, continuous_outcomes, categorical_outcomes,
 
 ###SF DATA
 library(sf)
-Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
+#Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
 
 download.file(
-  url = Adreces_json,
+  url = Adreces,
   destfile = "data/adreces.csv",
   mode = "wb"
 )
