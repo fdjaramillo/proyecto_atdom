@@ -139,7 +139,7 @@ export2md(descriptiva_strat_3_3, format = "html")
 
 # categorizacion ----------------------------------------------------------
 
-vars <- c("SEM_num", "emergency_visits", "INGRES_num")
+vars <- c("SEM_num", "emergency_visits", "INGRES_num","Exitus")
 
 df <- df |> 
   mutate(
@@ -161,8 +161,8 @@ descriptiva_strat_2_2_cat <- descrTable(
 export2md(descriptiva_strat_2_2_cat, format = "html")
 
 descriptiva_strat_3_3_cat <- descrTable(
-  organit_atdom_2 ~ SEM_num_cat2 + emergency_visits_cat2 + INGRES_num_cat2 +
-    SEM_num_cat3 + emergency_visits_cat3 + INGRES_num_cat3,
+  organit_atdom_2 ~ SEM_num+SEM_num_cat2 + emergency_visits+emergency_visits_cat2 + INGRES_num+INGRES_num_cat2
+    +Exitus,
   data = df,
   method = method,
   show.all = T,
@@ -174,7 +174,6 @@ descriptiva_strat_3_3_cat <- descrTable(
 export2md(descriptiva_strat_3_3_cat, format = "html")
 
 ###Balancing
-summary(df)
 
 df<-df%>%
   mutate(Age_quantile=factor(ntile(df$Edat,10)),
