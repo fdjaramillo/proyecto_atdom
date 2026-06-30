@@ -1,7 +1,7 @@
 # Carga explícita de dependencias
 library(tidyverse)
 library(compareGroups)
-source("R/utils_functions.R")
+source("R/utils_transformations.R") # Requerido para cat2 y cat3
 
 if (!file.exists("data/processed/df_cleaned.rds")) {
   stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")

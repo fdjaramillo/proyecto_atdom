@@ -4,7 +4,7 @@
 library(tidyverse)
 library(WeightIt)
 library(cobalt)
-source("R/utils_functions.R")
+source("R/utils_modeling.R") # Requerido para run_models_automatic
 
 if (!file.exists("data/processed/df_cleaned.rds")) {
   stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")

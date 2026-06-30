@@ -11,7 +11,8 @@ load("data/DF_work.RData")
 load("data/DF_work2.RData")
 
 # Cargar funciones de ayuda
-source("scripts/utils_functions.R")
+source("R/utils_validation.R")
+source("R/utils_transformations.R")
 
 # descriptiva enfermedades ------------------------------------------------
 patologias <- get_disease_summary(DF_work_2, `Abuso de sustancias`, VIH)
