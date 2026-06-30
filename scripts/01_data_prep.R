@@ -35,4 +35,7 @@ validate_input_data(df, metadata_dict) # valida y lanza warnings/errors
 df <- apply_all_transformations(df, metadata_dict) # transformar
 df <- set_names_to_df(df, metadata_dict) # poner etiquetas
 
-
+# Guardar dataset procesado de forma explícita
+dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
+saveRDS(df, "data/processed/df_cleaned.rds")
+message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")

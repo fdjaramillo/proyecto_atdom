@@ -1,3 +1,13 @@
+# Carga explícita de dependencias
+library(tidyverse)
+library(compareGroups)
+source("R/utils_functions.R")
+
+if (!file.exists("data/processed/df_cleaned.rds")) {
+  stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
+}
+df <- readRDS("data/processed/df_cleaned.rds")
+
 ### Descript
 
 # compare groups ----------------------------------------------------------

@@ -1,3 +1,28 @@
+# Carga explícita de dependencias
+library(tidyverse)
+library(compareGroups)
+
+if (!file.exists("data/processed/df_cleaned.rds")) {
+  stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
+}
+df <- readRDS("data/processed/df_cleaned.rds")
+load("data/DF_work2.RData") # Necesario para obtener DF_work_2 de forma independiente
+
+# Definición de variables del estado global necesarias para la ejecución
+method <- c(
+  DOMICILI_INF_TOT = 2,
+  TOTAL_VISITS_INF = 2,
+  coc_nurse = 2,
+  DOMICILI_MF_TOT = 2,
+  TOTAL_VISITS_MF = 2,
+  coc_physician = 2,
+  DOMICILI_CONJ = 2,
+  TOTAL_VISITS_CONJF = 2,
+  coc_conj = 2,
+  SEM_num = 2,
+  emergency_visits= 2,
+  INGRES_num= 2
+)
 
 df_cluster <-df%>%
     transmute(
