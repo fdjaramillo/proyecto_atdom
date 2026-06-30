@@ -1,48 +1,4 @@
-# capa de validacion ------------------------------------------------------
-
-validate_input_data <- function(df, dict) {
-  # Identificar variables requeridas y presentes
-  required_vars <- unique(dict$orig_var)
-  present_vars <- colnames(df)
-
-  # Detectar ausencias
-  missing_vars <- setdiff(required_vars, present_vars)
-
-  if (length(missing_vars) > 0) {
-    # Cruzar con el diccionario para ver cuáles son críticas
-    missing_info <- dict |>
-      filter(orig_var %in% missing_vars) |>
-      select(orig_var, critical) |>
-      distinct()
-
-    critical_missing <- missing_info |>
-      filter(critical == TRUE) |>
-      pull(orig_var)
-    optional_missing <- missing_info |>
-      filter(critical == FALSE) |>
-      pull(orig_var)
-
-    # Error fatal si falta alguna crítica
-    if (length(critical_missing) > 0) {
-      stop(paste(
-        "\n[ERROR FATAL] Faltan variables críticas obligatorias:",
-        paste(critical_missing, collapse = ", ")
-      ))
-    }
-
-    # Warning si faltan opcionales
-    if (length(optional_missing) > 0) {
-      warning(paste(
-        "\n[AVISO] Las siguientes variables opcionales no están presentes y se omitirán:",
-        paste(optional_missing, collapse = ", ")
-      ))
-    }
-  } else {
-    message("Validación exitosa: Todas las variables necesarias están presentes.")
-  }
-}
-
-# transformaciones especificas --------------------------------------------
+# Funciones de Transformación, Limpieza y Categorización
 
 # Transformador Barthel
 apply_barthel <- function(x) {
@@ -151,7 +107,6 @@ apply_emergency <- function(df) {
 
 apply_all_transformations <- function(df, dict) {
   df_trans <- df
-  
 
   # 1. Transformaciones directas columna a columna
   for (i in 1:nrow(dict)) {
@@ -191,8 +146,8 @@ apply_all_transformations <- function(df, dict) {
       df_trans[[row$target_var]] # Default: no tocar
     )
   }
-names(df)  
-# 2. Casos especiales multivariable (Incontinencia)
+
+  # 2. Casos especiales multivariable (Incontinencia)
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
   }
@@ -268,128 +223,3 @@ cat2 <- function(x) factor(
   ),
   levels = c("0","1+")
 )
-
-###### Modelos #######
-
-run_models_automatic<- function(data, continuous_outcomes, categorical_outcomes,
-                                 exposure, weights_var, adjust_vars = NULL) {
-  
-  rhs <- if (is.null(adjust_vars) || length(adjust_vars) == 0) {
-    exposure
-  } else {
-    paste(c(exposure, adjust_vars), collapse = " + ")
-  }
-  
-  keep_exposure_terms <- function(df) {
-    df %>%
-      filter(term == exposure | startsWith(term, paste0(exposure)))
-  }
-  
-  results_continuous <- map_dfr(continuous_outcomes, function(outcome) {
-    
-    formula_model <- as.formula(paste(outcome, "~", rhs))
-    
-    model <- glm(
-      formula_model,
-      data = data,
-      weights = data[[weights_var]],
-      family = gaussian()
-    )
-    
-    tidy(model, conf.int = TRUE) %>%
-      keep_exposure_terms() %>%
-      mutate(
-        term = gsub(paste0("^", exposure), "", term),
-        outcome = outcome,
-        model_type = "Gaussian",
-        measure = "Beta",
-        n = stats::nobs(model),
-        estimate_final = estimate,
-        conf.low_final = conf.low,
-        conf.high_final = conf.high
-      )
-  })
-
-  results_categorical <- map_dfr(categorical_outcomes, function(outcome) {
-    
-    formula_model <- as.formula(paste(outcome, "~", rhs))
-    
-    model <- glm(
-      formula_model,
-      data = data,
-      weights = data[[weights_var]],
-      family = quasibinomial()
-    )
-    
-    tidy(model, conf.int = TRUE, exponentiate = TRUE) %>%
-      keep_exposure_terms() %>%
-      mutate(
-        term = gsub(paste0("^", exposure), "", term),
-        outcome = outcome,
-        model_type = "Logistic",
-        measure = "OR",
-        n = stats::nobs(model),
-        estimate_final = estimate,
-        conf.low_final = conf.low,
-        conf.high_final = conf.high
-      )
-  })
-  
-  bind_rows(results_continuous, results_categorical) %>%
-    mutate(
-      model_formula = paste0(outcome, " ~ ", rhs),
-      result = paste0(
-        round(estimate_final, 2),
-        " (",
-        round(conf.low_final, 2),
-        "; ",
-        round(conf.high_final, 2),
-        ")"
-      ),
-      p.value = signif(p.value, 3)
-    ) %>%
-    select(
-      outcome,
-      model_type,
-      measure,
-      term,
-      n,
-      result,
-      p.value,
-      model_formula
-    )
-}
-
-###SF DATA
-library(sf)
-Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
-
-download.file(
-  url = Adreces,
-  destfile = "data/adreces.csv",
-  mode = "wb"
-)
-
-BCN_adreces<- st_read("data/adreces.csv")
-
-BCN_adreces<- BCN_adreces %>%
-  mutate(
-    x_etrs89 = na_if(x_etrs89, ""),
-    y_etrs89 = na_if(y_etrs89, ""),
-    x_etrs89 = as.numeric(x_etrs89),
-    y_etrs89 = as.numeric(y_etrs89)
-  ) %>%
-  filter(
-    !is.na(x_etrs89),
-    !is.na(y_etrs89)
-  )%>%
-  st_as_sf(
-    .,
-    coords = c("x_etrs89", "y_etrs89"),
-    crs = 25831,
-    remove = FALSE
-  )
-
-BCN_adreces<-BCN_adreces %>%
-  mutate(nom_carrer=toupper(nom_carrer))
-
