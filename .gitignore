@@ -1,9 +1,21 @@
+# archivos de sistema operativo
+.DS_Store
+Thumbs.db
+.env
+
+# archivos de R y Rstudio
 .Rproj.user
 .Rhistory
 .RData
 .Ruserdata
+.Rprofile
+.positai
 
-/data
-/results
+# entornos virtuales
+renv/
+!renv/activate.R
+!renv/settings.json
 
-scripts/R_script_reference.R
+# carpetas del proyecto
+data/
+results/
