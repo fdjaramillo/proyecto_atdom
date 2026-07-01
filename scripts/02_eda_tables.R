@@ -1,7 +1,9 @@
-# Carga explícita de dependencias
-library(tidyverse)
-library(compareGroups)
-source("R/utils_transformations.R") # Requerido para cat2 y cat3
+# ============================================================
+# 02_Base-line results.R
+# ============================================================
+
+
+source(here("scripts", "00_setup.R"))
 
 if (!file.exists("data/processed/df_cleaned.rds")) {
   stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
@@ -38,7 +40,19 @@ descriptiva <- descrTable(
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
+
 export2md(descriptiva, format = "html")
+
+export2html(
+  descriptiva,
+  file = here("Output", "Tables", "table1_baseline.html")
+)
+
+export2xls(
+  descriptiva,
+  file = here("Output", "Tables", "table1_baseline.xlsx")
+)
+
 
 # Descritiva en función PHC center
 
@@ -56,6 +70,18 @@ descriptiva_strat_1 <- descrTable(
 )
 export2md(descriptiva_strat_1, format = "html")
 
+
+export2html(
+  descriptiva_strat_1,
+  file = here("Output", "Tables", "table1_by_PHC.html")
+)
+
+export2xls(
+  descriptiva_strat_1,
+  file = here("Output", "Tables", "table1_by_PHC.xlsx")
+)
+
+
 # Descritiva en función Equip_Atdom, Equip_Inf	y  UAB_consulta
 
 descriptiva_strat_2 <- descrTable(
@@ -70,6 +96,8 @@ descriptiva_strat_2 <- descrTable(
 )
 export2md(descriptiva_strat_2, format = "html")
 
+
+
 # Descritiva Equip_Atdom, Equip_Inf,  UAB_consulta y UAB_consulta_reforç
 
 descriptiva_strat_3 <- descrTable(
@@ -83,6 +111,16 @@ descriptiva_strat_3 <- descrTable(
   extra.labels = c("", "", "", "")
 )
 export2md(descriptiva_strat_3, format = "html")
+
+export2html(
+  descriptiva_strat_3,
+  file = here("Output", "Tables", "table1_by_PHC_org.html")
+)
+
+export2xls(
+  descriptiva_strat_3,
+  file = here("Output", "Tables", "table1_by_PHC_org.xlsx")
+)
 
 
 # new ---------------------------------------------------------------------
@@ -99,6 +137,8 @@ descriptiva_strat_2_2 <- descrTable(
 )
 export2md(descriptiva_strat_2_2, format = "html")
 
+
+
 descriptiva_strat_3_3 <- descrTable(
   organit_atdom_2 ~ SEM_num + emergency_visits + INGRES_num,
   data = df,
@@ -111,6 +151,15 @@ descriptiva_strat_3_3 <- descrTable(
 )
 export2md(descriptiva_strat_3_3, format = "html")
 
+export2html(
+  descriptiva_strat_3_3,
+  file = here("Output", "Tables", "Outcomes_by_PHC_org.html")
+)
+
+export2xls(
+  descriptiva_strat_3_3,
+  file = here("Output", "Tables", "Outcomes_by_PHC_org.xlsx")
+)
 
 # categorizacion ----------------------------------------------------------
 

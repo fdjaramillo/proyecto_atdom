@@ -1,14 +1,11 @@
+# ============================================================
+# 02_Balancing groups.R
+# ============================================================
+
+source(here("scripts", "00_setup.R"))
+
 ###Balancing
 
-# Carga explícita de dependencias
-library(tidyverse)
-library(WeightIt)
-library(cobalt)
-source("R/utils_modeling.R") # Requerido para run_models_automatic
-
-if (!file.exists("data/processed/df_cleaned.rds")) {
-  stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
-}
 df <- readRDS("data/processed/df_cleaned.rds")
 
 df<-df%>%
@@ -25,28 +22,45 @@ W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+bar
                   estimand = "ATO",
                   method = "glm")
 
+
+
 bal.tab(W.out, 
         stats = "mean.diffs",
         thresholds = c(m = .05))
 
 summary(W.out) #print the output
 
+### Love plot
+png(
+  filename = here("Output", "Figures", "Balance_plot.png"),
+  width = 2400,
+  height = 1800,
+  res = 300
+)
+
+
 love.plot(
   W.out,
   abs = TRUE,
-  threshold = 0.05
+  threshold = 0.05,
+  position = "bottom"
 )
 
+dev.off()
+
+names(df_balanced)
 df_balanced <- df %>%
   mutate(w_ato = W.out$weights)
 
 continous_outcomes <- c("INGRES_num", "SEM_num", "emergency_visits")
+
 cat_outcomes <- c(
   "emergency_visits_cat2",
   "SEM_num_cat2",
   "INGRES_num_cat2",
   "Exitus"
 )
+
 
 #### Crudo
 results_all <- run_models_automatic(
