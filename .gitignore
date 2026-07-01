@@ -15,7 +15,3 @@ Thumbs.db
 renv/
 !renv/activate.R
 !renv/settings.json
-
-# carpetas del proyecto
-data/
-results/
