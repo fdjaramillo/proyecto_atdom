@@ -155,6 +155,7 @@ saveRDS(
 )
 
 #Pacients a centre amb dades SF per a routes.
+
 Patients_locations <- Patients_locations %>%
   st_drop_geometry() %>%
   transmute(
