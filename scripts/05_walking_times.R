@@ -30,6 +30,17 @@ Patients_locations$distancia_recta_m <- as.numeric(
   )
 )
 
+saveRDS(
+  Patients_locations,
+  here("data", "processed", "Patients_locations.rds")
+)
+
+saveRDS(
+  centros_sf,
+  here("data", "processed", "centros_sf.rds")
+)
+
+
 ##Més llunyans
 
 Patients_locations %>%

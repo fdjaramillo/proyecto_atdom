@@ -3,7 +3,7 @@
 # Project setup: packages, and paths
 
 # ---- Packages ----
-
+library(grid)
 library(tidyverse)       # dplyr, tidyr, ggplot2, readr, stringr, purrr, tibble
 library(here)            # project-relative paths
 library(lubridate)       # date handling: dmy(), ymd()
@@ -28,6 +28,8 @@ library(cobalt)
 library(purrr)
 library(sf)
 library(openrouteservice)
+library(scales)
+
 
 #install.packages( "openrouteservice",
 #  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"))
