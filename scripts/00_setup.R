@@ -27,7 +27,12 @@ library(WeightIt)
 library(cobalt)
 library(purrr)
 library(sf)
+library(openrouteservice)
 
+#install.packages( "openrouteservice",
+#  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"))
+
+#install.packages("keyring", type = "binary")
 # ---- General options ----
 
 options(

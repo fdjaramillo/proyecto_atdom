@@ -5,11 +5,8 @@
 
 source(here("scripts", "00_setup.R"))
 
-if (!file.exists("data/processed/df_cleaned.rds")) {
-  stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
-}
 df <- readRDS("data/processed/df_cleaned.rds")
-
+names(df)
 ### Descript
 
 # compare groups ----------------------------------------------------------
