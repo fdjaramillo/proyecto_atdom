@@ -1,3 +1,8 @@
+# ============================================================
+# Utils_functions.R
+# ============================================================
+
+source(here("scripts", "00_setup.R"))
 
 calcular_ruta_ors <- function(lon_origen, lat_origen, lon_destino, lat_destino) {
   
