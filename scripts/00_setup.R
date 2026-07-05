@@ -31,10 +31,14 @@ library(openrouteservice)
 library(scales)
 
 
-#install.packages( "openrouteservice",
-#  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"))
 
 #install.packages("keyring", type = "binary")
+
+#install.packages(
+#  "openrouteservice",
+#  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"),
+#  type = "source"
+)
 
 # ---- General options ----
 
