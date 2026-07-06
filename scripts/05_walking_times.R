@@ -106,3 +106,21 @@ Rutes_uniques <- pacientes_unicos %>%
 Patients_locations_rutas <- Patients_locations %>%
   left_join(Rutes_uniques, by = c("lon_paciente", "lat_paciente", "lon_centro", "lat_centro"))
 
+
+# categorizar renta media quintiles ---------------------------------------
+
+adreces_SF_Renda <- readRDS(here("data", "processed", "adreces_SF_Renda.rds"))
+
+Patients_locations_rutas <- Patients_locations_rutas |> 
+  left_join(
+    adreces_SF_Renda|> select(ID, Media_renta_Hogar),
+    by = "ID"
+  ) |> 
+  mutate(
+    categoria_renta = cut(
+      Media_renta_Hogar,
+      breaks = quantile(Media_renta_Hogar, probs = seq(0, 1, 0.2), na.rm = TRUE),
+      include.lowest = TRUE,
+      labels = c("Muy Baja", "Baja", "Media", "Alta", "Muy Alta")
+    )
+  )
