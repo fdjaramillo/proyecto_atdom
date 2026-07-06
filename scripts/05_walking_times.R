@@ -30,111 +30,79 @@ Patients_locations$distancia_recta_m <- as.numeric(
   )
 )
 
-saveRDS(
-  Patients_locations,
-  here("data", "processed", "Patients_locations.rds")
-)
 
-saveRDS(
-  centros_sf,
-  here("data", "processed", "centros_sf.rds")
-)
+# OPTIMIZACIÓN: remplazo de pmap
+# 1. Extraer coordenadas únicas y asignarles un ID temporal
+pacientes_unicos <- Patients_locations %>%
+  distinct(lon_paciente, lat_paciente) %>%
+  filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
+  mutate(id_paciente = row_number())
 
+centros_unicos <- Patients_locations %>%
+  distinct(lon_centro, lat_centro) %>%
+  filter(!is.na(lon_centro), !is.na(lat_centro)) %>%
+  mutate(id_centro = row_number())
 
-##Més llunyans
+# 2. Calcular tamaño del bloque dinámicamente según los centros
+n_centros <- nrow(centros_unicos)
+tamano_bloque <- 50 - n_centros  # Asegura no pasarnos del límite de 50 de la API
 
-Patients_locations %>%
-  arrange(desc(distancia_recta_m)) %>%
-  select(
-    ID,
-    Nom_centre,
-    nom_carrer,
-    numero_Carrer,
-    lon_paciente,
-    lat_paciente,
-    lon_centro,
-    lat_centro,
-    distancia_recta_m
-  ) %>%
-  head(20)
+pacientes_unicos <- pacientes_unicos %>%
+  mutate(bloque = (row_number() - 1) %/% tamano_bloque)
 
-Rutes_uniques <-Patients_locations %>%
-  filter(
-    !is.na(lon_paciente),
-    !is.na(lat_paciente),
-    !is.na(lon_centro),
-    !is.na(lat_centro)
-  ) %>%
-  distinct(
-    lon_paciente,
-    lat_paciente,
-    lon_centro,
-    lat_centro
-  ) %>%
-  mutate(
-    ruta_id = row_number()
+# 3. Función interna para consultar la Matrix API por cada bloque
+procesar_bloque_matrix <- function(df_pacientes_bloque) {
+  
+  # Combinar coordenadas limpiando los nombres de columnas para evitar conflictos
+  coordenadas <- rbind(
+    unname(as.matrix(df_pacientes_bloque[, c("lon_paciente", "lat_paciente")])),
+    unname(as.matrix(centros_unicos[, c("lon_centro", "lat_centro")]))
   )
-
-##pacients i rutes
-nrow(Patients_locations)
-nrow(Rutes_uniques)
-
-
-ruta_check <- ors_directions(
-  coordinates = list(
-    c(Rutes_uniques$lon_paciente[2], Rutes_uniques$lat_paciente[2]),
-    c(Rutes_uniques$lon_centro[2], Rutes_uniques$lat_centro[2])
-  ),
-  profile = "foot-walking",
-  output = "parsed"
-)
-
-ruta_check$features[[1]]$properties$summary$distance
-ruta_check$features[[1]]$properties$summary$duration / 60
-
-## Cálcul rutes
-dim(Rutes_uniques)
-
-Rutes <- pmap(
-  list(
-    Rutes_uniques$lon_paciente,
-    Rutes_uniques$lat_paciente,
-    Rutes_uniques$lon_centro,
-    Rutes_uniques$lat_centro
-  ),
-  calcular_ruta_ors
-)
-
-#Unir rutes
-Rutes_uniques <- bind_cols(
-  Rutes_uniques,
-  Rutes
-)
-
-## Summary
-head(Rutes_uniques)
-summary(Rutes_uniques$tiempo_caminando_min)
-
-
-Patients_locations_rutas <- Patients_locations %>%
-  left_join(
-    Rutes_uniques,
-    by = c(
-      "lon_paciente",
-      "lat_paciente",
-      "lon_centro",
-      "lat_centro"
+  
+  n_pacientes_bloque <- nrow(df_pacientes_bloque)
+  
+  # Corregido: Restamos 1 para convertir la indexación de R (1-based) a la de la API (0-based)
+  idx_sources <- (1:n_pacientes_bloque) - 1
+  idx_destinations <- ((n_pacientes_bloque + 1):(n_pacientes_bloque + n_centros)) - 1
+  
+  # Llamada masiva a la API de Matrices
+  res <- ors_matrix(
+    locations = coordenadas,
+    sources = idx_sources,
+    destinations = idx_destinations,
+    profile = "foot-walking",
+    metrics = c("duration", "distance"),
+    output = "parsed"
+  )
+  
+  if (is.null(res$distances)) return(data.frame())
+  
+  # Reestructurar las matrices resultantes
+  expand.grid(
+    id_paciente = df_pacientes_bloque$id_paciente,
+    id_centro = centros_unicos$id_centro
+  ) %>%
+    mutate(
+      distancia_caminando_m = as.vector(res$distances),
+      tiempo_caminando_min = as.vector(res$durations) / 60  # ORS devuelve segundos
     )
-  )
+}
 
-Patients_locations_rutas %>%
-  select(
-    ID,
-    Nom_centre,
-    nom_carrer,
-    numero_Carrer,
-    distancia_recta_m,
-    distancia_caminando_m,
-    tiempo_caminando_min
-  ) %>%
-  head()
+# 4. Iterar por bloques con una pequeña pausa para respetar el Rate Limit por minuto
+resultados_matrix <- pacientes_unicos %>%
+  group_split(bloque) %>%
+  map_df(~ {
+    Sys.sleep(2) # Pausa para evitar bloqueos de la API
+    procesar_bloque_matrix(.x)
+  })
+
+# 5. Recomponer el dataframe de rutas únicas
+Rutes_uniques <- pacientes_unicos %>%
+  left_join(resultados_matrix, by = "id_paciente") %>%
+  left_join(centros_unicos, by = "id_centro") %>%
+  select(lon_paciente, lat_paciente, lon_centro, lat_centro, distancia_caminando_m, tiempo_caminando_min)
+
+# 6. Unir los resultados finales de vuelta a tu dataset maestro
+Patients_locations_rutas <- Patients_locations %>%
+  left_join(Rutes_uniques, by = c("lon_paciente", "lat_paciente", "lon_centro", "lat_centro"))
+
