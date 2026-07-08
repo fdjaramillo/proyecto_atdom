@@ -5,13 +5,11 @@ source(here("scripts", "00_setup.R"))
 
 Patients_locations<-readRDS(here("data","processed","pacients_adreces_i_centre_sf.rds"))
 
-Patients_locations<-readRDS(here("data","processed","pacients_adreces_i_centre_sf.rds"))
-
 
 ors_api_key("eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgzMjA5MjM5MDM4YjRlNzVhZWEyNjgzNmZlYTJjNzFkIiwiaCI6Im11cm11cjY0In0=")
+names(Patients_locations)
 
-
-pacientes_sf <- Patients_locations %>%
+pacients_sf <- Patients_locations %>%
   st_as_sf(
     coords = c("lon_paciente", "lat_paciente"),
     crs = 4326,
@@ -33,13 +31,25 @@ Patients_locations$distancia_recta_m <- as.numeric(
   )
 )
 
-
-# OPTIMIZACIÓN: remplazo de pmap
 # 1. Extraer coordenadas únicas y asignarles un ID temporal
-pacientes_unicos <- Patients_locations %>%
-  distinct(lon_paciente, lat_paciente) %>%
+
+rutas_unicas <- Patients_locations %>%
   filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
-  mutate(id_paciente = row_number())
+  distinct(lon_paciente, lat_paciente) %>%
+  mutate(id_ruta = row_number())
+
+Patients_locations %>%
+  filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
+  count(ID, lon_paciente, lat_paciente) %>%
+  filter(n > 1)
+
+paciente_ruta <- Patients_locations %>%
+  filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
+  select(ID, lon_paciente, lat_paciente) %>%
+  left_join(
+    rutas_unicas,
+    by = c("lon_paciente", "lat_paciente")
+  )
 
 centros_unicos <- Patients_locations %>%
   distinct(lon_centro, lat_centro) %>%
@@ -47,74 +57,91 @@ centros_unicos <- Patients_locations %>%
   mutate(id_centro = row_number())
 
 # 2. Calcular tamaño del bloque dinámicamente según los centros
-n_centros <- nrow(centros_unicos)
-tamano_bloque <- 50 - n_centros  # Asegura no pasarnos del límite de 50 de la API
 
-pacientes_unicos <- pacientes_unicos %>%
+n_centros <- nrow(centros_unicos)
+tamano_bloque <- 30 - n_centros  # Asegura no pasarnos del límite de 50 de la API
+
+rutas_unicas <- rutas_unicas %>%
   mutate(bloque = (row_number() - 1) %/% tamano_bloque)
 
-# 3. Función interna para consultar la Matrix API por cada bloque
-procesar_bloque_matrix <- function(df_pacientes_bloque) {
   
-  # Combinar coordenadas limpiando los nombres de columnas para evitar conflictos
-  coordenadas <- rbind(
-    unname(as.matrix(df_pacientes_bloque[, c("lon_paciente", "lat_paciente")])),
-    unname(as.matrix(centros_unicos[, c("lon_centro", "lat_centro")]))
-  )
-  
-  n_pacientes_bloque <- nrow(df_pacientes_bloque)
-  
-  # Corregido: Restamos 1 para convertir la indexación de R (1-based) a la de la API (0-based)
-  idx_sources <- (1:n_pacientes_bloque) - 1
-  idx_destinations <- ((n_pacientes_bloque + 1):(n_pacientes_bloque + n_centros)) - 1
-  
-  # Llamada masiva a la API de Matrices
-  res <- ors_matrix(
-    locations = coordenadas,
-    sources = idx_sources,
-    destinations = idx_destinations,
-    profile = "foot-walking",
-    metrics = c("duration", "distance"),
-    output = "parsed"
-  )
-  
-  if (is.null(res$distances)) return(data.frame())
-  
-  # Reestructurar las matrices resultantes
-  expand.grid(
-    id_paciente = df_pacientes_bloque$id_paciente,
-    id_centro = centros_unicos$id_centro
-  ) %>%
-    mutate(
-      distancia_caminando_m = as.vector(res$distances),
-      tiempo_caminando_min = as.vector(res$durations) / 60  # ORS devuelve segundos
-    )
-}
+#### Llamada a ruta. ####
 
-# 4. Iterar por bloques con una pequeña pausa para respetar el Rate Limit por minuto
-resultados_matrix <- pacientes_unicos %>%
+resultados_matrix <- rutas_unicas  %>%
   group_split(bloque) %>%
   map_df(~ {
-    Sys.sleep(2) # Pausa para evitar bloqueos de la API
+    Sys.sleep(3)
     procesar_bloque_matrix(.x)
   })
 
-# 5. Recomponer el dataframe de rutas únicas
-Rutes_uniques <- pacientes_unicos %>%
-  left_join(resultados_matrix, by = "id_paciente") %>%
-  left_join(centros_unicos, by = "id_centro") %>%
-  select(lon_paciente, lat_paciente, lon_centro, lat_centro, distancia_caminando_m, tiempo_caminando_min)
+#Checks
 
-# 6. Unir los resultados finales de vuelta a tu dataset maestro
-Patients_locations_rutas <- Patients_locations %>%
-  left_join(Rutes_uniques, by = c("lon_paciente", "lat_paciente", "lon_centro", "lat_centro"))
+resultados_matrix %>%
+  summarise(
+    n_total = n(),
+    n_distancia_na = sum(is.na(distancia_caminando_m)),
+    n_tiempo_na = sum(is.na(tiempo_caminando_min))
+  )
 
+# 5. Recomponer el dataframe de rutas
+
+rutas_unicas 
+str(resultados_matrix)
+head(Patients_locations)
+
+patients_sf<-patients_sf %>%
+  filter(districte %in% c("05","02","04"))
+
+table(Patients_locations$nom_barri,Patients_locations$barri)
+
+head(paciente_ruta) 
+str(paciente_ruta_final)
+
+paciente_ruta_final <- Patients_locations %>%
+  filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"))%>%
+  mutate(id_centro= case_when(
+                              Nom_centre=="Centre d'Atenció Primària Ernest Lluch"~5,
+                              Nom_centre=="Centre d'Atenció Primària Montnegre"~1,
+                              Nom_centre=="Centre d'Atenció Primària Comte Borrell"~3,
+                              Nom_centre=="Centre d'Atenció Primària Casanova"~4,
+                              Nom_centre=="Centre d'Atenció Primària Adrià"~2))%>%
+  left_join(
+    paciente_ruta[,c(1,4)],
+    by = "ID")%>%
+  left_join(
+    resultados_matrix,
+    by = c("id_ruta","id_centro"))%>%
+  select(
+    ID,
+    id_ruta,
+    id_centro,
+    Nom_centre,
+    secc_censal,
+    lon_paciente,
+    lat_paciente,
+    lon_centro,
+    lat_centro,
+    distancia_caminando_m,
+    tiempo_caminando_min
+  )
+
+paciente_ruta_final %>%
+  summarise(
+    n_filas = n(),
+    n_pacientes = n_distinct(ID),
+    n_rutas = n_distinct(id_ruta),
+    n_centros = n_distinct(id_centro),
+    n_distancia_na = sum(is.na(distancia_caminando_m)),
+    n_tiempo_na = sum(is.na(tiempo_caminando_min))
+  )
+
+saveRDS(paciente_ruta_final,here("data", "processed", "paciente_ruta_final.rds"))
 
 # categorizar renta media quintiles ---------------------------------------
 
 adreces_SF_Renda <- readRDS(here("data", "processed", "adreces_SF_Renda.rds"))
 
-Patients_locations_rutas <- Patients_locations_rutas |> 
+paciente_renta <- paciente_ruta_final |> 
   left_join(
     adreces_SF_Renda|> select(ID, Media_renta_Hogar),
     by = "ID"
@@ -124,21 +151,8 @@ Patients_locations_rutas <- Patients_locations_rutas |>
       Media_renta_Hogar,
       breaks = quantile(Media_renta_Hogar, probs = seq(0, 1, 0.2), na.rm = TRUE),
       include.lowest = TRUE,
-      labels = c("Muy Baja", "Baja", "Media", "Alta", "Muy Alta")
+      labels = c("1q", "2q", "3q", "4q", "5q")
     )
   )
-<<<<<<< HEAD
 
-Patients_locations_rutas %>%
-  select(
-    ID,
-    Nom_centre,
-    nom_carrer,
-    numero_Carrer,
-    distancia_recta_m,
-    distancia_caminando_m,
-    tiempo_caminando_min
-  ) %>%
-  head()
-=======
->>>>>>> f5fdb886ba900cc23238f2b24fcdf82baccf9b21
+

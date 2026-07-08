@@ -29,6 +29,11 @@ library(purrr)
 library(sf)
 library(openrouteservice)
 library(scales)
+library(sf)
+library(stringr)
+library(stringi)
+library(data.table)
+
 
 
 
@@ -37,8 +42,7 @@ library(scales)
 #install.packages(
 #  "openrouteservice",
 #  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"),
-#  type = "source"
-)
+#  type = "source")
 
 # ---- General options ----
 

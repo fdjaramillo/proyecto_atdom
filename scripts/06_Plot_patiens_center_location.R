@@ -15,7 +15,7 @@ trams <- st_read(
 )
 
 
-Patients_locations<-readRDS(here("data", "processed","Patients_locations.rds"))
+Patients_locations_sf<-readRDS(here("data", "processed","Patients_locations.rds"))
 
 centros_sf<-readRDS(here("data", "processed", "centros_sf.rds"))
 
@@ -26,14 +26,12 @@ patients_sf <- Patients_locations %>%
     remove = FALSE
   ) %>%
   st_transform(st_crs(centros_sf))
-head(patients_sf)
 
 patients_sf<-patients_sf %>%
-  filter(districte %in% c("05","02","04"))
+  filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"))
   
 
 #Filtrat de pacients a centre de referència per zona
-
 trams %>%
   count(NDistric_E, sort = TRUE)
 
@@ -81,7 +79,7 @@ bbox_cent <- st_bbox(centros_sf)
 ###Avoid outliers in the map
 xlim_map <- quantile(
   patients_xy$x,
-  probs = c(0.01, 0.98),
+  probs = c(0.01, 0.99),
   na.rm = TRUE
 )
 
@@ -91,12 +89,10 @@ ylim_map <- quantile(
   na.rm = TRUE
 )
 
-margen <- 200
+margen <- 300
 
 xlim_map <- c(xlim_map[1] - margen, xlim_map[2] + margen)
 ylim_map <- c(ylim_map[1] - margen, ylim_map[2] + margen)
-
-
 
 plot_map<-ggplot() +
   geom_sf(
