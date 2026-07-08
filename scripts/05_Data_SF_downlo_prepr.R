@@ -1,24 +1,3 @@
-
-# 05_SF DATA DOWLOAD AND PREPARATION.R
-
-
-
-# Download Adreces ajuntament de Barcelons SF object
-
-
-
-## Problema amb UTS sense coordanades (borro)
-
-
-# Canvi a majuscules
-
-
-# Merge amb pacients
-
-
-## Renta media por hogar unidad censal data_frame
-
-
 # Coordenades Centres
 
 centres<- "https://opendata-ajuntament.barcelona.cat/data/dataset/b959dce3-4862-4697-a158-63f8b15ed4f3/resource/9e135848-eb0a-4bc5-8e60-de558213b3ed/download"
