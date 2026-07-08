@@ -1,6 +1,4 @@
-# ============================================================
-# 02_recode_variables.R
-# ============================================================
+# setup -------------------------------------------------------------------
 
 source(here("scripts", "00_setup.R"))
 
@@ -47,10 +45,7 @@ dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
 saveRDS(df, "data/processed/df_cleaned.rds")
 message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")
 
-# ============================================================
-### SF DATA ####
-# ============================================================
-
+# sf data -----------------------------------------------------------------
 
 Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
 
@@ -107,7 +102,7 @@ saveRDS(
   here("data", "processed", "adreces_SF.rds")
 )
 
-## Renta media
+# data renta media --------------------------------------------------------
 
 Renta_media<- read.csv2(here("data", "external", "renta_media_hogar.csv"),
                          stringsAsFactors = FALSE
