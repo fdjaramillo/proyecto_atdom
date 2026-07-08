@@ -59,12 +59,6 @@ BCN_adreces<- BCN_adreces %>%
   filter(
     !is.na(x_etrs89),
     !is.na(y_etrs89)
-  )%>%
-  st_as_sf(
-    .,
-    coords = c("x_etrs89", "y_etrs89"),
-    crs = 25831,
-    remove = FALSE
   )
 
 BCN_adreces<-BCN_adreces %>%
@@ -112,16 +106,10 @@ Centres_adreces <- read_csv(
   locale = locale(encoding = "UTF-16LE")
 )
 
-Centres_adreces_sf <- st_as_sf(
-  Centres_adreces,
-  coords = c("geo_epgs_25831_x", "geo_epgs_25831_y"),
-  crs = 25831,
-  remove = FALSE
-)
 
 
 
-Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
+Centres_estudi_adreces <- Centres_adreces %>%
   filter(name %in% c("Centre d'Atenció Primària Comte Borrell",
                      "Centre d'Atenció Primària Ernest Lluch",
                      "Centre d'Atenció Primària Casanova",
