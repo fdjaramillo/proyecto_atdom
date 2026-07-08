@@ -47,14 +47,6 @@ message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")
 
 # sf data -----------------------------------------------------------------
 
-Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
-
-download.file(
-  url = Adreces,
-  destfile = "data/adreces.csv",
-  mode = "wb"
-)
-
 BCN_adreces<- st_read("data/adreces.csv")
 
 BCN_adreces<- BCN_adreces %>%
@@ -149,14 +141,6 @@ saveRDS(
 # centres -----------------------------------------------------------------
 
 # Coordenades Centres
-
-centres<- "https://opendata-ajuntament.barcelona.cat/data/dataset/b959dce3-4862-4697-a158-63f8b15ed4f3/resource/9e135848-eb0a-4bc5-8e60-de558213b3ed/download"
-
-download.file(
-  url = centres,
-  destfile = "data/external/centres.csv",
-  mode = "wb"
-)
 
 Centres_adreces <- read.csv(
   "data/external/centres.csv",
