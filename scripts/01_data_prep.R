@@ -47,7 +47,7 @@ message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")
 
 # sf data -----------------------------------------------------------------
 
-BCN_adreces<- st_read("data/adreces.csv")
+BCN_adreces<- read_csv("data/adreces.csv")
 
 BCN_adreces<- BCN_adreces %>%
   mutate(
@@ -75,18 +75,15 @@ BCN_adreces<-BCN_adreces %>%
     USUA_NUMERO = as.integer(str_remove(numpost_i, "^0+"))
   )
 
-User_adreces<- read.csv2(here("data", "external", "USER_adreces_original.csv"),
-                         stringsAsFactors = FALSE
-)
+
+User_adreces<- read_csv2(here("data", "external", "USER_adreces_original.csv"))
 
 
 
 
 # data renta media --------------------------------------------------------
 
-Renta_media<- read.csv2(here("data", "external", "renta_media_hogar.csv"),
-                         stringsAsFactors = FALSE
-)
+Renta_media<- read_csv2(here("data", "external", "renta_media_hogar.csv"))
 
 Renta_media <- Renta_media %>%
   mutate(
@@ -110,9 +107,9 @@ Renta_media <- Renta_media %>%
 
 # Coordenades Centres
 
-Centres_adreces <- read.csv(
+Centres_adreces <- read_csv(
   "data/external/centres.csv",
-  fileEncoding = "UTF-16LE"
+  locale = locale(encoding = "UTF-16LE")
 )
 
 Centres_adreces_sf <- st_as_sf(
