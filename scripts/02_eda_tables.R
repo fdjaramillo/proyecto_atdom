@@ -9,22 +9,8 @@ df <- readRDS("data/processed/df_cleaned.rds")
 names(df)
 ### Descript
 
-# compare groups ----------------------------------------------------------
-
-method <- c(
-  DOMICILI_INF_TOT = 2,
-  TOTAL_VISITS_INF = 2,
-  coc_nurse = 2,
-  DOMICILI_MF_TOT = 2,
-  TOTAL_VISITS_MF = 2,
-  coc_physician = 2,
-  DOMICILI_CONJ = 2,
-  TOTAL_VISITS_CONJF = 2,
-  coc_conj = 2,
-  SEM_num = 2,
-  emergency_visits= 2,
-  INGRES_num= 2
-)
+# Cargar métodos estadísticos desde configuración
+method <- unlist(config::get("eda_methods"))
 
 # Descritiva todos los pa. Atdom
 

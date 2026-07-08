@@ -62,39 +62,6 @@ apply_logic_cat <- function(x, target_name) {
 }
 
 
-# transformador UAB
-apply_uab_mapping <- function(x, output_type = "name") {
-  # 1. Definir el factor base con etiquetas
-  levels_up <- c("00460", "00462", "00474", "00475", "00477", "00478", "01004")
-  labels_up <- c("Borrell", "Casanova", "Montnegre_1", "Montnegre_2", "Marc_Aureli", "Sant_Elies", "Lluch")
-
-  f_up <- factor(x, levels = levels_up, labels = labels_up)
-
-  # 2. Retornar según lo solicitado
-  if (output_type == "name") {
-    return(f_up)
-  }
-
-  if (output_type == "org1") {
-    return(fct_collapse(
-      f_up,
-      "Equip_Atdom"         = c("Borrell", "Lluch"),
-      "Equip_Inf"           = "Casanova",
-      "UAB_consulta"        = c("Montnegre_1", "Montnegre_2", "Sant_Elies", "Marc_Aureli")
-    ))
-  }
-
-  if (output_type == "org2") {
-    return(fct_collapse(
-      f_up,
-      "Equip_Atdom"         = c("Borrell", "Lluch"),
-      "Equip_Inf"           = "Casanova",
-      "UAB_consulta"        = c("Montnegre_1", "Montnegre_2"),
-      "UAB_consulta_reforc" = c("Sant_Elies", "Marc_Aureli")
-    ))
-  }
-}
-
 apply_emergency <- function(df) {
   if (!all(c("ALTA_UCIES_num", "CUAP_num") %in% colnames(df))) {
     return(factor(NA))
@@ -119,7 +86,7 @@ apply_all_transformations <- function(df, dict) {
       "numeric"       = as.numeric(val),
       "factor_status" = factor(ifelse(val == "A", "Yes", "No")), # Específico status
       "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")), # Específico sexo
-      "date_diff"     = as.numeric((as.Date("2024-12-16") - val) / 365.25),
+      "date_diff"     = as.numeric((as.Date(config::get("study_cutoff_date")) - val) / 365.25),
       "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
       "GMA_groups"    = as.factor(val),
       "barthel"       = apply_barthel(val),
@@ -132,9 +99,6 @@ apply_all_transformations <- function(df, dict) {
       "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
       "logic_cat"     = apply_logic_cat(val, row$target_var),
       "percentage"    = val * 100,
-      "uab_name"      = apply_uab_mapping(val, "name"),
-      "uab_org1"      = apply_uab_mapping(val, "org1"),
-      "uab_org2"      = apply_uab_mapping(val, "org2"),
       "SEM_num"       = ifelse(is.na(val), 0, val), # Si Na, 0
       "ALTA_UCIES_num"= ifelse(is.na(val), 0, val), # Si Na, 0
       "CUAP_num"      = ifelse(is.na(val), 0, val), # Si Na, 0

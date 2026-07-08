@@ -28,6 +28,17 @@ df <- DF_work |>
 
 # Flujo
 validate_input_data(df, metadata_dict) # valida y lanza warnings/errors
+
+# Mapeo de centros de salud externalizado
+# 1. Cargar la configuración uab
+conf_centros_uab <- config::get("centros_uab")
+
+# 2. Convertir la sección a un Data Frame
+df_centros_uab <- purrr::map_dfr(conf_centros_uab, as.data.frame)
+
+# 3. Unir con el dataset principal
+df <- df |> left_join(df_centros_uab, by = "USUA_UAB_UP")
+
 df <- apply_all_transformations(df, metadata_dict) # transformar
 df <- set_names_to_df(df, metadata_dict) # poner etiquetas
 
