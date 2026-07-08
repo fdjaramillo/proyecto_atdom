@@ -1,0 +1,50 @@
+default:
+  study_cutoff_date: "2024-12-16"
+  eda_methods:
+    DOMICILI_INF_TOT: 2
+    TOTAL_VISITS_INF: 2
+    coc_nurse: 2
+    DOMICILI_MF_TOT: 2
+    TOTAL_VISITS_MF: 2
+    coc_physician: 2
+    DOMICILI_CONJ: 2
+    TOTAL_VISITS_CONJF: 2
+    coc_conj: 2
+    SEM_num: 2
+    emergency_visits: 2
+    INGRES_num: 2
+  centros_uab:
+    - USUA_UAB_UP: "00460"
+      uab_name: "Borrell"
+      organit_atdom_1: "Equip_Atdom"
+      organit_atdom_2: "Equip_Atdom"
+      
+    - USUA_UAB_UP: "00462"
+      uab_name: "Casanova"
+      organit_atdom_1: "Equip_Inf"
+      organit_atdom_2: "Equip_Inf"
+      
+    - USUA_UAB_UP: "01004"
+      uab_name: "Lluch"
+      organit_atdom_1: "Equip_Atdom"
+      organit_atdom_2: "Equip_Atdom"
+      
+    - USUA_UAB_UP: "00474"
+      uab_name: "Montnegre_1"
+      organit_atdom_1: "UAB_consulta"
+      organit_atdom_2: "UAB_consulta"
+      
+    - USUA_UAB_UP: "00475"
+      uab_name: "Montnegre_2"
+      organit_atdom_1: "UAB_consulta"
+      organit_atdom_2: "UAB_consulta"
+      
+    - USUA_UAB_UP: "00478"
+      uab_name: "Sant_Elies"
+      organit_atdom_1: "UAB_consulta"
+      organit_atdom_2: "UAB_consulta_reforc"
+      
+    - USUA_UAB_UP: "00477"
+      uab_name: "Marc_Aureli"
+      organit_atdom_1: "UAB_consulta"
+      organit_atdom_2: "UAB_consulta_reforc"
