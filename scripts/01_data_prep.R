@@ -80,14 +80,6 @@ User_adreces<- read.csv2(here("data", "external", "USER_adreces_original.csv"),
 )
 
 
-BCN_adreces_users_SF <- BCN_adreces  %>%
-  inner_join(
-    User_adreces[,1:3],
-    by = c(
-      "nom_carrer" = "USUA_CARRER",
-      "USUA_NUMERO" = "USUA_NUMERO"
-    )
-  )
 
 
 # data renta media --------------------------------------------------------
@@ -112,22 +104,6 @@ Renta_media <- Renta_media %>%
   )
 )  
 
-BCN_adreces_users__renda_SF <- BCN_adreces_users_SF  %>%
-  inner_join(
-    Renta_media[,4:5],
-    by = c(
-      "secc_cens" = "Seccion.Censal"
-    )
-  )
-
-BCN_adreces_users__renda_SF <- BCN_adreces_users_SF %>%
-  left_join(
-    Renta_media,
-    by = c(
-      "districte" = "Distrito",
-      "secc_cens" = "Seccion.Censal"
-    )
-  )
 
 
 # centres -----------------------------------------------------------------
@@ -210,14 +186,5 @@ Center_location <- Center_location %>%
   mutate(
     Centre_ID = str_replace_all(Centre_ID, "[^0-9]", ""))
 
-Patients_locations <- Patients_locations %>%
-  left_join(
-    df_pacients %>% select(ID, Centre_ID),
-    by = "ID") %>%
-  left_join(
-    Center_location %>%
-      select(Centre_ID, Nom_centre, lon_centro, lat_centro),
-    by = "Centre_ID"
-  )
 
 
