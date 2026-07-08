@@ -3,8 +3,8 @@
 source(here("scripts", "00_setup.R"))
 
 # Carga de datos raw
-load("data/DF_work.RData")
-load("data/DF_work2.RData")
+load(here("data", "DF_work.RData"))
+load(here("data", "DF_work2.RData"))
 
 
 # Descriptiva enfermedades ------------------------------------------------
@@ -41,13 +41,13 @@ df <- apply_all_transformations(df, metadata_dict) # transformar
 df <- set_names_to_df(df, metadata_dict) # poner etiquetas
 
 # Guardar dataset procesado de forma explícita
-dir.create("data/processed", showWarnings = FALSE, recursive = TRUE)
-saveRDS(df, "data/processed/df_cleaned.rds")
+dir.create(here("data", "processed"), showWarnings = FALSE, recursive = TRUE)
+saveRDS(df, here("data", "processed", "df_cleaned.rds"))
 message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")
 
 # sf data -----------------------------------------------------------------
 
-BCN_adreces<- read_csv("data/adreces.csv")
+BCN_adreces<- read_csv(here("data", "adreces.csv"))
 
 BCN_adreces<- BCN_adreces %>%
   mutate(
@@ -108,7 +108,7 @@ Renta_media <- Renta_media %>%
 # Coordenades Centres
 
 Centres_adreces <- read_csv(
-  "data/external/centres.csv",
+  here("data", "external", "centres.csv"),
   locale = locale(encoding = "UTF-16LE")
 )
 
@@ -166,7 +166,7 @@ Center_location <- Center_location %>%
     lat_centro = as.numeric(geo_epgs_4326_lat)
   )
 
-df_pacients<- readRDS("data/processed/df_cleaned.rds")
+df_pacients<- readRDS(here("data", "processed", "df_cleaned.rds"))
 
 df_pacients<-df_pacients%>%
   select(ID,USUA_UAB_UP)%>%
