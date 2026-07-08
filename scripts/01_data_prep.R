@@ -89,10 +89,6 @@ BCN_adreces_users_SF <- BCN_adreces  %>%
     )
   )
 
-saveRDS(
-  BCN_adreces_users_SF,
-  here("data", "processed", "adreces_SF.rds")
-)
 
 # data renta media --------------------------------------------------------
 
@@ -133,10 +129,6 @@ BCN_adreces_users__renda_SF <- BCN_adreces_users_SF %>%
     )
   )
 
-saveRDS(
-  BCN_adreces_users__renda_SF,
-  here("data", "processed", "adreces_SF_Renda.rds")
-)
 
 # centres -----------------------------------------------------------------
 
@@ -154,10 +146,6 @@ Centres_adreces_sf <- st_as_sf(
   remove = FALSE
 )
 
-saveRDS(
-  Centres_adreces_sf,
-  here("data", "external", "Centres_adreces_sf.rds")
-)
 
 
 Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
@@ -168,10 +156,6 @@ Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
                      "Centre d'Atenció Primària Adrià")
                     )
 
-saveRDS(
-  Centres_estudi_adreces_sf,
-  here("data", "external", "Centres_estudi_adreces_sf.rds")
-)
 
 #Pacients a centre amb dades SF per a routes.
 
@@ -236,8 +220,4 @@ Patients_locations <- Patients_locations %>%
     by = "Centre_ID"
   )
 
-saveRDS(
-  Patients_locations,
-  here("data", "processed", "pacients_adreces_i_centre_sf.rds")
-)
 
