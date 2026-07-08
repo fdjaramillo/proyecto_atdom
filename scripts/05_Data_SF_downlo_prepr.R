@@ -2,7 +2,6 @@
 # 05_SF DATA DOWLOAD AND PREPARATION.R
 
 
-locations<-readRDS(here("data","processed","adreces_SF.rds"))
 
 # Download Adreces ajuntament de Barcelons SF object
 
