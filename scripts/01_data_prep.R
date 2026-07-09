@@ -110,26 +110,8 @@ Centres_adreces <- Centres_adreces %>%
 
 
 Centres_estudi_adreces <- Centres_adreces %>%
-  filter(name %in% c("Centre d'Atenció Primària Comte Borrell",
-                     "Centre d'Atenció Primària Ernest Lluch",
-                     "Centre d'Atenció Primària Casanova",
-                     "Centre d'Atenció Primària Montnegre",
-                     "Centre d'Atenció Primària Adrià")
-                    )
+  filter(register_id %in% df_centros_uab$id_centres_csv)
 
-
-
-df_pacients<- readRDS(here("data", "processed", "df_cleaned.rds"))
-
-df_pacients<-df_pacients%>%
-  select(ID,USUA_UAB_UP)%>%
-  mutate(Centre_ID= case_when(USUA_UAB_UP=="Borrell"~ "99400282464",
-                              USUA_UAB_UP=="Casanova"~ "92086002684",
-                              USUA_UAB_UP=="Montnegre_1"~ "93056132443",
-                              USUA_UAB_UP=="Montnegre_2"~ "93056132443",
-                              USUA_UAB_UP=="Marc_Aureli"~ "92086002931",
-                              USUA_UAB_UP=="Sant_Elies"~ "92086002931",
-                              USUA_UAB_UP=="Lluch"~ "94354121938"))
 
 
 
