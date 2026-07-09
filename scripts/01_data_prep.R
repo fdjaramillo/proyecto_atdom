@@ -53,6 +53,22 @@ BCN_adreces<- BCN_adreces %>%
   filter(
     !is.na(nom_carrer),
     !is.na(numpost_i)
+  ) |>
+  # seleccionar columnas que aportan valor
+  select(
+    nom_carrer, numpost_i,              # Las llaves
+    nom_districte, nom_barri,           # Las zonas
+    dist_post,                          # El código postal
+    latitud_wgs84, longitud_wgs84       # Las coordenadas GPS
+  ) |>
+  distinct() |>
+  mutate(
+    # factor: nom_carrer, nom_districte, nom_barri
+    across(c(nom_carrer, nom_districte, nom_barri), as.factor),
+    # integer: numpost_i, dist_post
+    across(c(numpost_i, dist_post), as.integer),
+    # double: latitud_wgs84, longitud_wgs84
+    across(c(latitud_wgs84, longitud_wgs84), as.double)
   )
 
 
