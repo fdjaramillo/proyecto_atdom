@@ -72,6 +72,12 @@ BCN_adreces<- BCN_adreces %>%
   )
 
 
+BCN_adreces <- BCN_adreces |>
+  arrange(nom_carrer, numpost_i, latitud_wgs84, longitud_wgs84) |>
+  group_by(nom_carrer, numpost_i) |>
+  slice(1) |>
+  ungroup()
+
 
 User_adreces<- read_csv2(here("data", "external", "USER_adreces_original.csv"))
 
