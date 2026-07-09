@@ -61,13 +61,6 @@ BCN_adreces<- BCN_adreces %>%
     !is.na(y_etrs89)
   )
 
-BCN_adreces<-BCN_adreces %>%
-  mutate(nom_carrer=toupper(nom_carrer))
-
-BCN_adreces<-BCN_adreces %>%
-  mutate(
-    USUA_NUMERO = as.integer(str_remove(numpost_i, "^0+"))
-  )
 
 
 User_adreces<- read_csv2(here("data", "external", "USER_adreces_original.csv"))
