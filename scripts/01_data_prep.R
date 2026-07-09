@@ -50,15 +50,9 @@ message("Dataset guardado exitosamente en data/processed/df_cleaned.rds")
 BCN_adreces<- read_csv(here("data", "adreces.csv"))
 
 BCN_adreces<- BCN_adreces %>%
-  mutate(
-    x_etrs89 = na_if(x_etrs89, ""),
-    y_etrs89 = na_if(y_etrs89, ""),
-    x_etrs89 = as.numeric(x_etrs89),
-    y_etrs89 = as.numeric(y_etrs89)
-  ) %>%
   filter(
-    !is.na(x_etrs89),
-    !is.na(y_etrs89)
+    !is.na(nom_carrer),
+    !is.na(numpost_i)
   )
 
 
