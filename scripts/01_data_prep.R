@@ -100,6 +100,12 @@ Centres_adreces <- read_csv(
   locale = locale(encoding = "UTF-16LE")
 )
 
+Centres_adreces <- Centres_adreces %>%
+  mutate(
+    # eliminar caracteres invisibles
+    # comprobar ejecutando charToRaw(Centres_adreces$register_id[1]) y charToRaw("92086002201")
+    register_id = str_replace_all(register_id, "[^0-9]", "")
+  )
 
 
 
@@ -126,9 +132,6 @@ df_pacients<-df_pacients%>%
                               USUA_UAB_UP=="Lluch"~ "94354121938"))
 
 
-Center_location <- Center_location %>%
-  mutate(
-    Centre_ID = str_replace_all(Centre_ID, "[^0-9]", ""))
 
 
 
