@@ -14,12 +14,11 @@ trams <- st_read(
   quiet = TRUE
 )
 
-
-Patients_locations_sf<-readRDS(here("data", "processed","Patients_locations.rds"))
+Patients_locations_sf<-readRDS(here("data", "processed", "adreces_SF.rds"))
 
 centros_sf<-readRDS(here("data", "processed", "centros_sf.rds"))
 
-patients_sf <- Patients_locations %>%
+patients_sf <- Patients_locations_sf %>%
   st_as_sf(
     coords = c("lon_paciente", "lat_paciente"),
     crs = 4326,
@@ -27,11 +26,6 @@ patients_sf <- Patients_locations %>%
   ) %>%
   st_transform(st_crs(centros_sf))
 
-patients_sf<-patients_sf %>%
-  filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"))
-  
-
-#Filtrat de pacients a centre de referència per zona
 trams %>%
   count(NDistric_E, sort = TRUE)
 
@@ -66,7 +60,6 @@ patients_xy <- patients_sf %>%
   ) %>%
   st_drop_geometry()
 
-
 ##Ploting
 
 labels = percent_format(accuracy = 1)
@@ -79,17 +72,17 @@ bbox_cent <- st_bbox(centros_sf)
 ###Avoid outliers in the map
 xlim_map <- quantile(
   patients_xy$x,
-  probs = c(0.01, 0.99),
+  probs = c(0.0, 1),
   na.rm = TRUE
 )
 
 ylim_map <- quantile(
   patients_xy$y,
-  probs = c(0.01, 0.98),
+  probs = c(0.0, 1),
   na.rm = TRUE
 )
 
-margen <- 300
+margen <- 500
 
 xlim_map <- c(xlim_map[1] - margen, xlim_map[2] + margen)
 ylim_map <- c(ylim_map[1] - margen, ylim_map[2] + margen)
@@ -172,8 +165,11 @@ plot_map<-ggplot() +
     y = NULL
   )
 
+plot_map
+library(plotly)
+
 ggsave(
-  filename = here("Output","Figures", "Patients_location_300dpi.png"),
+  filename = here("Output","Figures", "Patients_location2_300dpi.png"),
   plot = plot_map,
   width = 11.69,
   height = 8.27,

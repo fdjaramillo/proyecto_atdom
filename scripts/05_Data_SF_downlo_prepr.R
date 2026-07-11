@@ -104,11 +104,6 @@ User_adreces<- read.csv2(here("data", "external", "USER_adreces_original.csv"),
                          stringsAsFactors = FALSE
 )
 
-saveRDS(
-  BCN_adreces_users_SF,
-  here("data", "processed", "adreces_SF.rds")
-)
-
 User_adreces <- User_adreces %>%
   mutate(
     nom_carrer = normaliza_carrer(USUA_CARRER),
@@ -146,9 +141,9 @@ equivalencias_carrers <- tribble(
   "DE BADAL",                           "BADAL",
   "DE NAVARRA",                         "NAVARRA",
   "DE XILE",                            "XILE",
-  "EMPEDRAT","PEDRALBES",
-  "AGUILO","PUIG AGUILAR",
-  "JOAN FERNANDEZ",	"JOAN FERRANDIZ",
+  "EMPEDRAT",                           "PEDRALBES",
+  "AGUILO",                             "PUIG AGUILAR",
+  "JOAN FERNANDEZ",	                    "JOAN FERRANDIZ",
   "DE PAU CASALS",                      "PAU CASALS",
   "DE JOSEP TARRADELLAS",               "JOSEP TARRADELLAS",
   "DE LA RIERA DE CASSOLES",            "RIERA DE CASSOLES",
@@ -160,17 +155,16 @@ equivalencias_carrers <- tribble(
   "COMTES DE BELL LLOC",                "COMTES DE BELL LLOC",
   "SABINO DE ARANA",                    "SABINO ARANA",
   "VALL D HEBRON",                      "VALL D HEBRON",
-  "LA LLACUNA", "LLACUNA",
-  "MARQUES DE MONT ROIG","MONT ROIG",
-  "COMES" , "COMAS",
-  "PARC", "PARC",
+  "LA LLACUNA",                         "LLACUNA",
+  "MARQUES DE MONT ROIG",               "MONT ROIG",
+  "COMES" ,                             "COMAS",
+  "PARC",                               "PARC",
   "APEL LES MESTRES",                   "APEL LES MESTRES",
   "CARAVEL LA NINA",                    "CARAVEL LA LA NINA",
   "GAL LA PLACIDIA",                    "GAL LA PLACIDIA",
   "PARAL LEL",                          "PARAL LEL",
   "MARQUES DE MONT ROIG",               "MARQUES DE MONT ROIG",
   "PUIG REIG",                          "PUIG REIG",
-  
   "FRANCESC PEREZ CABRERO",             "FRANCESC PEREZ CABRERO",
   "MARIA CUBI I SOLER",                 "MARIA CUBI",
   "JOAN SEBASTIA BACH",                 "JOAN SEBASTIA BACH",
@@ -209,6 +203,8 @@ User_adreces$USUA_NUMERO[User_adreces$ID=="1085"]<-17
 User_adreces$USUA_NUMERO[User_adreces$ID=="770"]<-4
 User_adreces$USUA_NUMERO[User_adreces$ID=="340"]<-17
 User_adreces$USUA_NUMERO[User_adreces$ID=="402"]<-25
+User_adreces$USUA_NUMERO[User_adreces$ID=="1307"]<-2
+User_adreces$USUA_NUMERO[User_adreces$ID=="504"]<-2
 
 BCN_adreces_users <- User_adreces %>%
   left_join(
@@ -219,19 +215,13 @@ BCN_adreces_users <- User_adreces %>%
     )
   )
 
-BCN_adreces_users %>%
-  filter(is.na(x_etrs89) | is.na(y_etrs89))%>%
-distinct(
-    ID,
-    USUA_CARRER,
-    USUA_NUMERO,
-    nom_carrer,
-    nom_carrer_bcn,
-    nom_carrer_join
-  ) %>%
+BCN_adreces_users <- BCN_adreces_users %>%
+  filter(!is.na(x_etrs89) | !is.na(y_etrs89)) %>%
+  filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"),
+         !ID %in% c("1009","1553","35","1054","1361","1737","1857",
+                    "1575","1624","1868","304","1987","544","798","1393","1418","1841","922","1130","2024","2053","770","1740","504","1307")) %>%
+  distinct(ID, USUA_CARRER, USUA_NUMERO, nom_carrer, nom_carrer_bcn, nom_carrer_join, .keep_all = TRUE) %>%
   arrange(nom_carrer_join, USUA_NUMERO)
-
-class(BCN_adreces_users)
 
 BCN_adreces_users_SF <- BCN_adreces_users %>%
   filter(!is.na(x_etrs89), !is.na(y_etrs89)) %>%
@@ -240,6 +230,14 @@ BCN_adreces_users_SF <- BCN_adreces_users %>%
     crs = 25831,
     remove = FALSE
   )
+
+id<-BCN_adreces_users_SF[,1]
+
+saveRDS(
+  BCN_adreces_users_SF,
+  here("data", "processed", "adreces_SF.rds")
+)
+
 
 
 ## Renta media por hogar unidad censal data_frame
@@ -334,7 +332,7 @@ Patients_locations <- BCN_adreces_users_SF %>%
   transmute(
     ID = ID,
     codi_carrer = codi_carrer,
-    nom_carrer = nom_carrer,
+    nom_carrer = nom_carrer_join,
     numero_Carrer = USUA_NUMERO,
     secc_censal = secc_cens,
     districte = districte,
