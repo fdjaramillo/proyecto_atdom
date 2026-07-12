@@ -25,7 +25,7 @@ centros_sf <- Patients_locations %>%
 
 Patients_locations$distancia_recta_m <- as.numeric(
   st_distance(
-    pacientes_sf,
+    pacients_sf,
     centros_sf,
     by_element = TRUE
   )
@@ -88,9 +88,6 @@ resultados_matrix %>%
 rutas_unicas 
 str(resultados_matrix)
 head(Patients_locations)
-
-patients_sf<-patients_sf %>%
-  filter(districte %in% c("05","02","04"))
 
 table(Patients_locations$nom_barri,Patients_locations$barri)
 

@@ -8,6 +8,7 @@ source(here("scripts", "00_setup.R"))
 load("data/DF_work.RData")
 load("data/DF_work2.RData")
 
+DF_work_2<-readRDS(here("data", "DF_work3.RDS"))
 
 # Descriptiva enfermedades ------------------------------------------------
 patologias <- get_disease_summary(DF_work_2, `Abuso de sustancias`, VIH)
@@ -21,7 +22,7 @@ metadata_dict <- read_csv2("metadata_dict.csv") |>
 
 df <- DF_work |>
   as_tibble() |>
-  left_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR,
+  inner_join(DF_work_2 |> select(ID, C_GMA_N_CRONIQUES, VC_VIU_SOL_VALOR, VC_ADEQ_LLAR_VALOR,
                                 C_GMA_COMPLEXITAT,PR_MACA_DATA,PR_PCC_DATA),
     by = "ID"
   )

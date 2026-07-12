@@ -22,8 +22,6 @@ W.out <- weightit(organit_atdom_2~ GMA_CODE_quantile+Age_quantile+sex_female+bar
                   estimand = "ATO",
                   method = "glm")
 
-
-
 bal.tab(W.out, 
         stats = "mean.diffs",
         thresholds = c(m = .05))
@@ -48,7 +46,6 @@ love.plot(
 
 dev.off()
 
-names(df_balanced)
 df_balanced <- df %>%
   mutate(w_ato = W.out$weights)
 

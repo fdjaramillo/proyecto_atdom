@@ -120,7 +120,7 @@ normaliza_carrer <- function(x) {
     as.character() %>%
     str_to_upper() %>%
     stringi::stri_trans_general("Latin-ASCII") %>%   # quita acentos
-    str_replace_all("\\?", "N") %>%                  # arregla casos tipo IBA?EZ -> IBANEZ
+    str_replace_all("\\?", "Ñ") %>%                  # arregla casos tipo IBA?EZ -> IBANEZ
     str_replace_all("·", ".") %>%
     str_replace_all("\\.", " ") %>%
     str_replace_all("-", " ") %>%

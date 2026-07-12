@@ -164,8 +164,8 @@ vars <- c("SEM_num", "emergency_visits", "INGRES_num","Exitus")
 
 df <- df |> 
   mutate(
-    across(all_of(vars), cat3, .names = "{.col}_cat3"),
-    across(all_of(vars), cat2, .names = "{.col}_cat2")
+    across(all_of(vars), ~ cat3(as.numeric(as.character(.x))), .names = "{.col}_cat3"),
+    across(all_of(vars), ~ cat2(as.numeric(as.character(.x))), .names = "{.col}_cat2")
   )
 
 descriptiva_strat_2_2_cat <- descrTable(

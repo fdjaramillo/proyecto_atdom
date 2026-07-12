@@ -16,7 +16,7 @@ trams <- st_read(
 
 Patients_locations_sf<-readRDS(here("data", "processed", "adreces_SF.rds"))
 
-centros_sf<-readRDS(here("data", "processed", "centros_sf.rds"))
+centros_sf<-readRDS(here("data", "external", "Centres_estudi_adreces_sf.rds"))
 
 patients_sf <- Patients_locations_sf %>%
   st_as_sf(
@@ -43,7 +43,7 @@ patients_sf <- patients_sf %>%
 centros_sf <- centros_sf %>%
   st_transform(st_crs(trams_sel))
 
-patients_plot <- Patients_locations %>%
+patients_plot <- Patients_locations_sf %>%
   st_as_sf(
     coords = c("lon_paciente", "lat_paciente"),
     crs = 4326,
@@ -72,17 +72,17 @@ bbox_cent <- st_bbox(centros_sf)
 ###Avoid outliers in the map
 xlim_map <- quantile(
   patients_xy$x,
-  probs = c(0.0, 1),
+  probs = c(0.0, 0.95),
   na.rm = TRUE
 )
 
 ylim_map <- quantile(
   patients_xy$y,
-  probs = c(0.0, 1),
+  probs = c(0.0, 0.95),
   na.rm = TRUE
 )
 
-margen <- 500
+margen <- 300
 
 xlim_map <- c(xlim_map[1] - margen, xlim_map[2] + margen)
 ylim_map <- c(ylim_map[1] - margen, ylim_map[2] + margen)
@@ -115,9 +115,10 @@ plot_map<-ggplot() +
   geom_point(
     data = patients_xy,
     aes(x = x, y = y),
-    color = "grey15",
-    alpha = 0.18,
-    size = 0.22
+    color = "black",
+    alpha = 1,          # puedes subir la opacidad para ver mejor cada punto
+    size = 0.5,
+    position = position_jitter(width = 0, height = 10)
   ) +
   geom_sf(
     data = centros_sf,
@@ -177,3 +178,74 @@ ggsave(
   dpi = 300,
   bg = "white"
 )
+
+
+library(plotly)
+
+# En el geom_point, añade text = ID
+plot_map2 <- ggplot() +
+  geom_sf(data = trams_sel, color = "grey5", linewidth = 0.12) +
+  stat_density_2d(
+    data = patients_xy,
+    aes(x = x, y = y, fill = after_stat(nlevel)),
+    geom = "polygon",
+    contour = TRUE,
+    bins = 8,
+    alpha = 0.45,
+    h = c(500, 500)
+  ) +
+  scale_fill_gradientn(
+    colours = c("#FDE0DD", "#FCAE91", "#FB6A4A", "#DE2D26", "#A50F15"),
+    name = "Relative density",
+    labels = percent_format(accuracy = 1),
+    values = rescale(c(0, 0.25, 0.5, 0.75, 1))
+  ) +
+  geom_point(
+    data = patients_xy,
+    aes(x = x, y = y, text = ID),   # añadimos text = ID
+    color = "grey15",
+    alpha = 0.18,
+    size = 0.22
+  ) +
+  geom_sf(
+    data = centros_sf,
+    shape = 22,
+    size = 3.4,
+    fill = "grey90",
+    color = "black",
+    stroke = 0.8
+  ) +
+  coord_sf(xlim = xlim_map, ylim = ylim_map) +
+  guides(
+    fill = guide_colorbar(
+      title.position = "top",
+      title.hjust = 0.5,
+      barwidth = unit(8, "cm"),
+      barheight = unit(0.4, "cm")
+    )
+  ) +
+  theme_minimal() +
+  theme(
+    panel.grid = element_blank(),
+    axis.text = element_blank(),
+    axis.title = element_blank(),
+    axis.ticks = element_blank(),
+    legend.position = "bottom",
+    legend.direction = "horizontal",
+    legend.margin = margin(t = -12, r = 0, b = 0, l = 0),
+    legend.box.margin = margin(t = -14, r = 0, b = 0, l = 0),
+    legend.title = element_text(size = 10, face = "bold"),
+    legend.text = element_text(size = 9),
+    plot.title = element_text(size = 13, face = "bold"),
+    plot.subtitle = element_text(size = 10, color = "grey30"),
+    plot.margin = margin(t = 5, r = 5, b = 2, l = 5)
+  ) +
+  labs(
+    title = "Spatial distribution of patients receiving primary home-based care",
+    subtitle = "Smoothed density of residential locations and primary care centres",
+    x = NULL,
+    y = NULL
+  )
+
+# Convertir a interactivo con plotly
+ggplotly(plot_map2, tooltip = "text")
