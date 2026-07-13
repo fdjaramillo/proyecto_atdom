@@ -1,0 +1,43 @@
+﻿n;orig_var;target_var;label;type;critical
+1;ID;ID;Patient ID;id;TRUE
+2;Situacio_2026;Exitus;Exitus 2026;factor_status;TRUE
+3;USUA_SEXE;sex_female;Sex (female);factor_sex;FALSE
+4;EDAT;Edat;Age (years);numeric;FALSE
+5;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
+6;GMA_PNIV;high_comorbidity;High comorbidity status (AMG index ≥p85);gma_strat;FALSE
+6;GMA_PNIV;GMA_groups;GMA Groups;ESTRATGMA;FALSE
+7;GMA_N_CRONIQUES;GMA_N_CRONIQUES;No. registered chronic diseases;numeric;FALSE
+8;GMA_COMPLEXITAT;GMA_CODE;Commorbidity and complexity;numeric;FALSE
+9;FRAGIL_VIG;FRAGIL_VIG;Fragil Vig index;numeric;FALSE
+10;PCC;PCC;PCC;PCC;FALSE
+11;MACA;MACA;MACA;MACA;FALSE
+12;BARTHEL;barthel_cat;Dependency according to Barthel Index for Activities of Daily Living;barthel;FALSE
+13;PFEIFER;pfeiffer_cat;Short Portable Mental Status Questionnaire;pfeiffer;FALSE
+14;IN_URINARIA;incontinence_cat;Incontinence;incontinence;FALSE
+15;IN_FECAL;incontinence_cat;Incontinence;incontinence;FALSE
+16;GIJON;social_risk;Social risk;gijon;FALSE
+17;TIRS;TIRS_cat;Social Risk (TIRS categorized);factor_TIRS_cat;FALSE
+18;TIRS;TIRS_num;Social Risk (TIRS numeric);numeric;FALSE
+19;VIU_SOL;living_alone;Living alone;logic_cat;FALSE
+20;ADEQ_LLAR;need_household_adapt;Need for any household adaptation;logic_cat;FALSE
+21;DOMICILI_INF_TOT;Nurse_Home_Visits;PHC Nurse - Home-based visits;numeric;FALSE
+22;TOTAL_VISITS_INF;Nurse_Total_Visits;PHC Nurse - All visits (telephone and home based);numeric;FALSE
+23;UPC_TOTAL_INF;COC_Nurse;PHC Nurse - CoC-assigned;percentage;FALSE
+24;DOMICILI_MF_TOT;GP_Home_Visits;GP - Home-based visits;numeric;FALSE
+25;TOTAL_VISITS_MF;GP_Total_Visits;GP - All visits (telephone and home based);numeric;FALSE
+26;UPC_TOTAL_MF;COC_GP;GP - CoC-assigned;percentage;FALSE
+27;DOMICILI_CONJ_TOT;GP_Nurse_home_Visits;GP and PHC nurse - Home-based visits;numeric;FALSE
+28;TOTAL_VISITS_CONJ;Tota_GP_Nurse_visits;GP and PHC nurse - All visits (telephone and home based);numeric;FALSE
+29;UPC_TOTAL_CONJ;COC_Total;GP and PHC nurse - CoC-assigned;percentage;FALSE
+30;SEM_num;Home_Ambulances;Home_Ambulances;numeric;FALSE
+31;ALTA_UCIES_num;ED_visits;ED_visits;numeric;FALSE
+32;CUAP_num;PC_Emergency_unit;PC_Emergency_visits;numeric;FALSE
+33;INGRES_num;Hospital_Admissions;Hospital_Admissions;numeric;FALSE
+34;USUA_UAB_UP;Single_PHC;Healthcare center;Single_PHC;FALSE
+35;USUA_UAB_UP;Home_based_PHC_org;PHC Home Base organization;Home_based_PHC_org;FALSE
+36;USUA_UAB_UP;PHC_name;organit_atdom_2;PHC_name;FALSE
+37;TIME_FOLLOW_UP_TOTAL;Time_follow_up_total;Time_follow_up_total;numeric;FALSE
+38;TIME_FOLLOW_UP_SEM;Time_follow_up_ambulance;Time_follow_up_ambulance;numeric;FALSE
+39;TIME_FOLLOW_UP_UCIES;Time_follow_up_emergency_d;Time_follow_up_emergency_d;numeric;FALSE
+40;TIME_FOLLOW_UP_CUAP;Time_Follow_Up_PC_Emergency_unit;Time_Follow_Up_PC_Emergency_unit;numeric;FALSE
+41;TIME_FOLLOW_UP_INGRES;Time_follow_up_hospital_admission;Time_follow_up_hospital_admission;numeric;FALSE

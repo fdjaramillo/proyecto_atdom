@@ -33,8 +33,7 @@ library(sf)
 library(stringr)
 library(stringi)
 library(data.table)
-
-
+library(xlsx)
 
 
 #install.packages("keyring", type = "binary")
@@ -56,4 +55,4 @@ options(
 source(here("R", "utils_modeling.R"))
 source(here("R", "utils_transformations.R"))
 source(here("R", "utils_validation.R"))
-source(here("R", "utils_funcitons.R"))
+source(here("R", "utils_functions.R"))

@@ -14,6 +14,7 @@ trams <- st_read(
   quiet = TRUE
 )
 
+
 Patients_locations_sf<-readRDS(here("data", "processed", "adreces_SF.rds"))
 
 centros_sf<-readRDS(here("data", "external", "Centres_estudi_adreces_sf.rds"))
@@ -72,13 +73,13 @@ bbox_cent <- st_bbox(centros_sf)
 ###Avoid outliers in the map
 xlim_map <- quantile(
   patients_xy$x,
-  probs = c(0.0, 0.95),
+  probs = c(0.0, 1),
   na.rm = TRUE
 )
 
 ylim_map <- quantile(
   patients_xy$y,
-  probs = c(0.0, 0.95),
+  probs = c(0.0, 1),
   na.rm = TRUE
 )
 

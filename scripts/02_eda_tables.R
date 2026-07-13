@@ -5,32 +5,38 @@
 
 source(here("scripts", "00_setup.R"))
 
-df <- readRDS("data/processed/df_cleaned.rds")
-names(df)
-### Descript
+#Prep data_frame
+TB_Descrip <- readRDS(here("data","Tables_DB","TB_pacientes.RDS"))
+TB_Descrip <- apply_all_transformations(TB_pacientes, metadata_dict) # transformar
+TB_Descrip<- set_names_to_df(TB_Descrip, metadata_dict) # poner etiquetas
 
-# compare groups ----------------------------------------------------------
+saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
+
+### Descriptives
 
 method <- c(
-  DOMICILI_INF_TOT = 2,
-  TOTAL_VISITS_INF = 2,
-  coc_nurse = 2,
-  DOMICILI_MF_TOT = 2,
-  TOTAL_VISITS_MF = 2,
-  coc_physician = 2,
-  DOMICILI_CONJ = 2,
-  TOTAL_VISITS_CONJF = 2,
-  coc_conj = 2,
-  SEM_num = 2,
-  emergency_visits= 2,
-  INGRES_num= 2
+  Nurse_Home_Visits = 2,
+  Nurse_Total_Visits = 2,
+  COC_Nurse = 2,
+  GP_Home_Visits = 2,
+  GP_Total_Visits = 2,
+  COC_GP = 2,
+  Tota_GP_Nurse_visits = 2,
+  GP_Nurse_home_Visits = 2,
+  COC_Total = 2,
+  Home_Ambulances = 2,
+  PC_Emergency_unit = 2,
+  ED_visits= 2,
+  Hospital_Admissions= 2
 )
 
-# Descritiva todos los pa. Atdom
+# Total población ----------------------------------------------------------
 
-descriptiva <- descrTable(
+# Descriptiva funcional y clínica 
+
+baseline <- descrTable(
   ~ . - ID,
-  data = df,
+  data = TB_Descrip[,c(1:18)],
   method = method,
   max.xlev = 25,
   hide.no = "no",
@@ -38,26 +44,35 @@ descriptiva <- descrTable(
   extra.labels = c("", "", "", "")
 )
 
-export2md(descriptiva, format = "html")
+export2md(baseline, format = "html")
 
 export2html(
-  descriptiva,
-  file = here("Output", "Tables", "table1_baseline.html")
+  baseline,
+  file = here("Output", "Tables", "baseline.html")
 )
 
 export2xls(
-  descriptiva,
-  file = here("Output", "Tables", "table1_baseline.xlsx")
+  baseline,
+  file = here("Output", "Tables", "baseline.xlsx")
 )
 
+### Patologias
 
-# Descritiva en función PHC center
+Diseases<-readRDS(here("data","Tables_DB","TB_pacientes.RDS"))%>%
+  select(`Abuso de sustancias`:VIH)
 
-descriptiva_strat_1 <- descrTable(
-  USUA_UAB_UP ~ . - ID - organit_atdom_1 - organit_atdom_2,
-  data = df,
-  max.ylev = 7,
-  max.xlev = 25,
+Diseases <- get_disease_summary(Diseases, `Abuso de sustancias`, VIH)
+
+write_xlsx(
+  Diseases,
+  here("Output", "Tables", "table1_baseline_patologia.xlsx")
+)
+
+names(TB_Descrip)
+# Descriptiva Equip_Atdom, Equip_Inf, UAB_consulta y UAB_consulta_reforç
+Table_2_by_org <- descrTable(
+  Home_based_PHC_org ~ . - ID,
+  data = TB_Descrip[,c(1:19,21,22,24,33)],
   show.all = T,
   chisq.test.perm = T,
   method = method,
@@ -65,108 +80,54 @@ descriptiva_strat_1 <- descrTable(
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
-export2md(descriptiva_strat_1, format = "html")
 
+export2md(Table_2_by_org, format = "html")
 
 export2html(
-  descriptiva_strat_1,
-  file = here("Output", "Tables", "table1_by_PHC.html")
+  Table_2_by_org,
+  file = here("Output", "Tables", "Table_2_by_org.html")
 )
 
 export2xls(
-  descriptiva_strat_1,
-  file = here("Output", "Tables", "table1_by_PHC.xlsx")
+  Table_2_by_org,
+  file = here("Output", "Tables", "Table_2_by_org.xlsx")
 )
 
+# Outcomes ---------------------------------------------------------------------
 
-# Descritiva en función Equip_Atdom, Equip_Inf	y  UAB_consulta
-
-descriptiva_strat_2 <- descrTable(
-  organit_atdom_1 ~ . - ID - USUA_UAB_UP - organit_atdom_2,
-  data = df,
+Table_3_outcomes <- descrTable(
+  Home_based_PHC_org ~ Home_Ambulances + ED_visits + PC_Emergency_unit+Hospital_Admissions,
+  data = TB_Descrip,
+  method = method,
   show.all = T,
   chisq.test.perm = T,
-  method = method,
   hide.no = "no",
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
-export2md(descriptiva_strat_2, format = "html")
-
-
-
-# Descritiva Equip_Atdom, Equip_Inf,  UAB_consulta y UAB_consulta_reforç
-
-descriptiva_strat_3 <- descrTable(
-  organit_atdom_2 ~ . - ID - USUA_UAB_UP - organit_atdom_1,
-  data = df,
-  show.all = T,
-  chisq.test.perm = T,
-  method = method,
-  hide.no = "no",
-  include.miss = T,
-  extra.labels = c("", "", "", "")
-)
-export2md(descriptiva_strat_3, format = "html")
+export2md(Table_3_outcomes, format = "html")
 
 export2html(
-  descriptiva_strat_3,
-  file = here("Output", "Tables", "table1_by_PHC_org.html")
-)
-
-export2xls(
-  descriptiva_strat_3,
-  file = here("Output", "Tables", "table1_by_PHC_org.xlsx")
-)
-
-
-# new ---------------------------------------------------------------------
-
-descriptiva_strat_2_2 <- descrTable(
-  organit_atdom_1 ~ SEM_num + emergency_visits + INGRES_num,
-  data = df,
-  method = method,
-  show.all = T,
-  chisq.test.perm = T,
-  hide.no = "no",
-  include.miss = T,
-  extra.labels = c("", "", "", "")
-)
-export2md(descriptiva_strat_2_2, format = "html")
-
-
-
-descriptiva_strat_3_3 <- descrTable(
-  organit_atdom_2 ~ SEM_num + emergency_visits + INGRES_num,
-  data = df,
-  method = method,
-  show.all = T,
-  chisq.test.perm = T,
-  hide.no = "no",
-  include.miss = T,
-  extra.labels = c("", "", "", "")
-)
-export2md(descriptiva_strat_3_3, format = "html")
-
-export2html(
-  descriptiva_strat_3_3,
+  Table_3_outcomes,
   file = here("Output", "Tables", "Outcomes_by_PHC_org.html")
 )
 
 export2xls(
-  descriptiva_strat_3_3,
+  Table_3_outcomes,
   file = here("Output", "Tables", "Outcomes_by_PHC_org.xlsx")
 )
 
 # categorizacion ----------------------------------------------------------
+#AQUI
 
-vars <- c("SEM_num", "emergency_visits", "INGRES_num","Exitus")
+vars <- c("SEM_num", "ED_visits", "PC_Emergency_unit", "Hospital_Admissions","Exitus")
 
 df <- df |> 
   mutate(
     across(all_of(vars), ~ cat3(as.numeric(as.character(.x))), .names = "{.col}_cat3"),
     across(all_of(vars), ~ cat2(as.numeric(as.character(.x))), .names = "{.col}_cat2")
   )
+
 
 descriptiva_strat_2_2_cat <- descrTable(
   organit_atdom_1 ~ SEM_num_cat2 + emergency_visits_cat2 + INGRES_num_cat2 +

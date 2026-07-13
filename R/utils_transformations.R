@@ -95,14 +95,6 @@ apply_uab_mapping <- function(x, output_type = "name") {
   }
 }
 
-apply_emergency <- function(df) {
-  if (!all(c("ALTA_UCIES_num", "CUAP_num") %in% colnames(df))) {
-    return(factor(NA))
-  }
-  res <- coalesce(df$ALTA_UCIES_num, 0) + coalesce(df$CUAP_num, 0)
-  return(res)
-}
-
 # orquestador -------------------------------------------------------------
 
 apply_all_transformations <- function(df, dict) {
@@ -132,28 +124,25 @@ apply_all_transformations <- function(df, dict) {
       "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
       "logic_cat"     = apply_logic_cat(val, row$target_var),
       "percentage"    = val * 100,
-      "uab_name"      = apply_uab_mapping(val, "name"),
-      "uab_org1"      = apply_uab_mapping(val, "org1"),
-      "uab_org2"      = apply_uab_mapping(val, "org2"),
-      "SEM_num"       = ifelse(is.na(val), 0, val), # Si Na, 0
-      "ALTA_UCIES_num"= ifelse(is.na(val), 0, val), # Si Na, 0
-      "CUAP_num"      = ifelse(is.na(val), 0, val), # Si Na, 0
-      "INGRES_num"    = ifelse(is.na(val), 0, val), # Si Na, 0
-      "Time_follow_up_ambulance"             = ifelse(is.na(val), 407, val), # Si Na, 407
-      "Time_follow_up_emergency_d"           = ifelse(is.na(val), 407, val), # Si Na, 407
-      "Time_follow_up_hospital_admission"    = ifelse(is.na(val), 407, val), # Si Na, 407
+      "PHC_name"      = apply_uab_mapping(val, "name"),
+      "Single_PHC"             = apply_uab_mapping(val, "org1"),
+      "Home_based_PHC_org"    = apply_uab_mapping(val, "org2"),
+      "Home_Ambulances"        = ifelse(is.na(val), 0, val), # Si Na, 0
+      "ED_visits"              = ifelse(is.na(val), 0, val), # Si Na, 0
+      "PC_Emergency_unit"      = ifelse(is.na(val), 0, val), # Si Na, 0
+      "Hospital_Admissions"    = ifelse(is.na(val), 0, val), # Si Na, 0,
+      "Time_follow_up_ambulance"           = ifelse(is.na(val), 407, val), # Si Na, 407
+      "Time_Follow_Up_PC_Emergency_unit"   = ifelse(is.na(val), 407, val), # Si Na, 407
+      "Time_follow_up_emergency_d"         = ifelse(is.na(val), 407, val), # Si Na, 407
+      "Time_follow_up_hospital_admission"  = ifelse(is.na(val), 407, val), # Si Na, 407
       
       df_trans[[row$target_var]] # Default: no tocar
     )
   }
-
+   
   # 2. Casos especiales multivariable (Incontinencia)
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
-  }
-
-  if ("emergency" %in% dict$type) {
-    df_trans$emergency_visits <- apply_emergency(df)
   }
 
   # 3. Limpieza final: solo columnas target presentes en dict

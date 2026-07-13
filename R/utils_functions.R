@@ -1,8 +1,5 @@
 # ============================================================
 # Utils_functions.R
-# ============================================================
-
-source(here("scripts", "00_setup.R"))
 
 # Función para calcular distancias y tiempos caminando entre un bloque de pacientes
 # y todos los centros disponibles mediante la API de matrices de OpenRouteService.
@@ -128,11 +125,3 @@ normaliza_carrer <- function(x) {
     str_squish()
 }
 
-buscar_candidatos_bcn <- function(calle) {
-  BCN_adreces %>%
-    as_tibble() %>%
-    distinct(nom_carrer) %>%
-    filter(str_detect(nom_carrer, fixed(calle, ignore_case = TRUE)) |
-             str_detect(calle, fixed(nom_carrer, ignore_case = TRUE))) %>%
-    arrange(nom_carrer)
-}

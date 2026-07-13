@@ -29,10 +29,10 @@
 27;DOMICILI_CONJ_TOT;DOMICILI_CONJ;GP and PHC nurse - Home-based visits;numeric;FALSE
 28;TOTAL_VISITS_CONJ;TOTAL_VISITS_CONJF;GP and PHC nurse - All visits (telephone and home based);numeric;FALSE
 29;UPC_TOTAL_CONJ;coc_conj;GP and PHC nurse - CoC-assigned;percentage;FALSE
-30;SEM_num;SEM_num;SEM_num;SEM_num;FALSE
-31;ALTA_UCIES_num;emergency_visits;emergency_visits;emergency;FALSE
-32;CUAP_num;emergency_visits;emergency_visits;emergency;FALSE
-33;INGRES_num;INGRES_num;INGRES_num;INGRES_num;FALSE
+30;SEM_num;Urgent_ambulance;Urgent_ambulance;Urgent_ambulance;FALSE
+31;ALTA_UCIES_num;Emergency_Dep_visits;Emergency_Dep_visits;Emergency_Dep_visits;FALSE
+32;CUAP_num;Primary_Care_Urgent_At_visits;Primary_Care_Urgent_At_visits;Primary_Care_Urgent_At_visits;FALSE
+33;INGRES_num;Hospital_admission;Hospital_admission;Hospital_admission;FALSE
 34;USUA_UAB_UP;USUA_UAB_UP;Healthcare center;uab_name;FALSE
 35;USUA_UAB_UP;organit_atdom_1;organit_atdom_1;uab_org1;FALSE
 36;USUA_UAB_UP;organit_atdom_2;organit_atdom_2;uab_org2;FALSE

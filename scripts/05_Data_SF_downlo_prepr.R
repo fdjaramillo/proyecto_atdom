@@ -1,6 +1,6 @@
 
 # ============================================================
-# 05_SF DATA DOWLOAD AND PREPARATION.R
+# 01.1_SF DATA DOWLOAD AND PREPARATION.R
 # ============================================================
 
 source(here("scripts", "00_setup.R"))
@@ -100,8 +100,7 @@ BCN_adreces<- st_as_sf(
 
 ## Carrers pacients
 
-User_adreces<- read.csv2(here("data", "external", "USER_adreces_original.csv"),
-                         stringsAsFactors = FALSE
+User_adreces<- readRDS(here("data", "external", "id_adreces_ID.rds")
 )
 
 User_adreces <- User_adreces %>%
@@ -109,8 +108,6 @@ User_adreces <- User_adreces %>%
     nom_carrer = normaliza_carrer(USUA_CARRER),
     USUA_NUMERO = as.numeric(USUA_NUMERO)
   )
-
-
 
 ### Problemes de codificació dels carrers en DF EHR hacer igual que la denominación original.
 
@@ -187,9 +184,6 @@ User_adreces <- User_adreces %>%
     nom_carrer_join = coalesce(nom_carrer_bcn, nom_carrer)
   )
 
-User_adreces$USUA_NUMERO[User_adreces$ID=="770"]<-4
-User_adreces$USUA_NUMERO[User_adreces$ID=="340"]<-17
-
 BCN_adreces_users <- User_adreces %>%
   left_join(
     BCN_adreces,
@@ -202,6 +196,7 @@ BCN_adreces_users <- User_adreces %>%
 BCN_adreces_users <- BCN_adreces_users %>%
   filter(!is.na(x_etrs89) | !is.na(y_etrs89)) %>%
   filter(!USUA_CARRER %in% c("CONSELL DE CENT","CORTS CATALANES","QUATRE CAMINS","POMARET")) %>%
+  filter(ID!="947") %>%
         distinct(ID, USUA_CARRER, USUA_NUMERO, nom_carrer, nom_carrer_bcn, nom_carrer_join, .keep_all = TRUE) %>%
   arrange(nom_carrer_join, USUA_NUMERO)
 
@@ -211,13 +206,6 @@ BCN_adreces_users_SF <- BCN_adreces_users %>%
     crs = 25831,
     remove = FALSE
   )
-
-id<-BCN_adreces_users_SF[,1]
-
-saveRDS(
-  id,
-  here("data", "processed", "id_adreces.rds")
-)
 
 saveRDS(
   BCN_adreces_users_SF,
