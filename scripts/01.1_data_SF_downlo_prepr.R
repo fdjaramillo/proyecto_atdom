@@ -1,7 +1,7 @@
 
 # ============================================================
 # 01.1_SF DATA DOWLOAD AND PREPARATION.R
-# ============================================================
+
 
 source(here("scripts", "00_setup.R"))
 
@@ -183,22 +183,23 @@ User_adreces <- User_adreces %>%
   mutate(
     nom_carrer_join = coalesce(nom_carrer_bcn, nom_carrer)
   )
+names(BCN_adreces_users)
 
 BCN_adreces_users <- User_adreces %>%
   left_join(
     BCN_adreces,
     by = c(
       "nom_carrer_join" = "nom_carrer",
-      "USUA_NUMERO" = "num_i"
-    )
-  )
+      "USUA_NUMERO" = "num_i"),
+    relationship = "many-to-many"
+  )%>%
+  distinct(ID, .keep_all = TRUE)
 
 BCN_adreces_users <- BCN_adreces_users %>%
   filter(!is.na(x_etrs89) | !is.na(y_etrs89)) %>%
   filter(!USUA_CARRER %in% c("CONSELL DE CENT","CORTS CATALANES","QUATRE CAMINS","POMARET")) %>%
-  filter(ID!="947") %>%
-        distinct(ID, USUA_CARRER, USUA_NUMERO, nom_carrer, nom_carrer_bcn, nom_carrer_join, .keep_all = TRUE) %>%
-  arrange(nom_carrer_join, USUA_NUMERO)
+  filter(!ID %in% c("947","2053","498"))%>%
+  arrange(ID)
 
 BCN_adreces_users_SF <- BCN_adreces_users %>%
   st_as_sf(
@@ -212,7 +213,10 @@ saveRDS(
   here("data", "processed", "adreces_SF.rds")
 )
 
-
+saveRDS(
+  BCN_adreces_users_SF,
+  here("data", "Tables_DB", "Adreces_SF_ID.rds")
+)
 
 ## Renta media por hogar unidad censal data_frame
 
@@ -280,11 +284,6 @@ Centres_adreces_sf <- st_as_sf(
   remove = FALSE
 )
 
-saveRDS(
-  Centres_adreces_sf,
-  here("data", "external", "Centres_adreces_sf.rds")
-)
-
 Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
   filter(name %in% c("Centre d'Atenció Primària Comte Borrell",
                      "Centre d'Atenció Primària Ernest Lluch",
@@ -330,7 +329,7 @@ Patients_locations <- BCN_adreces_users_SF %>%
     lat_paciente = as.numeric(latitud_wgs84)
   )
 
-Center_location <- Centres_adreces_sf %>%
+Center_location <- Centres_estudi_adreces_sf %>%
   st_drop_geometry() %>%
   transmute(
     Centre_ID = register_id,
@@ -349,18 +348,17 @@ Center_location <- Centres_adreces_sf %>%
     lat_centro = as.numeric(geo_epgs_4326_lat)
   )
 
-df_pacients<- readRDS("data/processed/df_cleaned.rds")
+df_pacients<- readRDS( here("data","Tables_DB","TB_pacientes.RDS"))
 
 df_pacients<-df_pacients%>%
   select(ID,USUA_UAB_UP)%>%
-  mutate(Centre_ID= case_when(USUA_UAB_UP=="Borrell"~ "99400282464",
-                              USUA_UAB_UP=="Casanova"~ "92086002684",
-                              USUA_UAB_UP=="Montnegre_1"~ "93056132443",
-                              USUA_UAB_UP=="Montnegre_2"~ "93056132443",
-                              USUA_UAB_UP=="Marc_Aureli"~ "92086002931",
-                              USUA_UAB_UP=="Sant_Elies"~ "92086002931",
-                              USUA_UAB_UP=="Lluch"~ "94354121938"))
-
+  mutate(Centre_ID= case_when(USUA_UAB_UP=="00460"~ "99400282464",
+                              USUA_UAB_UP=="00462"~ "92086002684",
+                              USUA_UAB_UP=="00474"~ "93056132443",
+                              USUA_UAB_UP=="00475"~ "93056132443",
+                              USUA_UAB_UP=="00477"~ "92086002931",
+                              USUA_UAB_UP=="00478"~ "92086002931",
+                              USUA_UAB_UP=="01004"~ "94354121938"))
 
 Center_location <- Center_location %>%
   mutate(

@@ -1,11 +1,11 @@
 # ============================================================
 # 06_Plot_patients_center_location.R
 # ============================================================
-source(here("scripts", "00_setup.R"))
+source(c)
 
 
 nodes <- st_read(
-  here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
+  c,
   quiet = TRUE
 )
 
@@ -91,7 +91,7 @@ ylim_map <- c(ylim_map[1] - margen, ylim_map[2] + margen)
 plot_map<-ggplot() +
   geom_sf(
     data = trams_sel,
-    color = "grey5",
+    color = "black",
     linewidth = 0.12
   ) +
   stat_density_2d(
@@ -103,9 +103,9 @@ plot_map<-ggplot() +
     ),
     geom = "polygon",
     contour = TRUE,
-    bins = 8,
     alpha = 0.45,
-    h = c(500, 500)
+    bins = 7,
+    h = c(400, 400),
   ) +
   scale_fill_gradientn(
     colours = c("#FDE0DD", "#FCAE91", "#FB6A4A", "#DE2D26", "#A50F15"),
@@ -117,8 +117,8 @@ plot_map<-ggplot() +
     data = patients_xy,
     aes(x = x, y = y),
     color = "black",
-    alpha = 1,          # puedes subir la opacidad para ver mejor cada punto
-    size = 0.5,
+    alpha = 0.9,          # puedes subir la opacidad para ver mejor cada punto
+    size = 0.45,
     position = position_jitter(width = 0, height = 10)
   ) +
   geom_sf(
@@ -171,7 +171,7 @@ plot_map
 library(plotly)
 
 ggsave(
-  filename = here("Output","Figures", "Patients_location2_300dpi.png"),
+  filename = here("Output","Figures", "Patients_location_300dpi.png"),
   plot = plot_map,
   width = 11.69,
   height = 8.27,

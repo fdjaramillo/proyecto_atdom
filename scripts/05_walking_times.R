@@ -7,7 +7,6 @@ Patients_locations<-readRDS(here("data","processed","pacients_adreces_i_centre_s
 
 
 ors_api_key("eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6IjgzMjA5MjM5MDM4YjRlNzVhZWEyNjgzNmZlYTJjNzFkIiwiaCI6Im11cm11cjY0In0=")
-names(Patients_locations)
 
 pacients_sf <- Patients_locations %>%
   st_as_sf(
@@ -37,11 +36,6 @@ rutas_unicas <- Patients_locations %>%
   filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
   distinct(lon_paciente, lat_paciente) %>%
   mutate(id_ruta = row_number())
-
-Patients_locations %>%
-  filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
-  count(ID, lon_paciente, lat_paciente) %>%
-  filter(n > 1)
 
 paciente_ruta <- Patients_locations %>%
   filter(!is.na(lon_paciente), !is.na(lat_paciente)) %>%
@@ -91,11 +85,7 @@ head(Patients_locations)
 
 table(Patients_locations$nom_barri,Patients_locations$barri)
 
-head(paciente_ruta) 
-str(paciente_ruta_final)
-
 paciente_ruta_final <- Patients_locations %>%
-  filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"))%>%
   mutate(id_centro= case_when(
                               Nom_centre=="Centre d'Atenció Primària Ernest Lluch"~5,
                               Nom_centre=="Centre d'Atenció Primària Montnegre"~1,
