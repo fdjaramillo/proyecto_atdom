@@ -183,7 +183,6 @@ User_adreces <- User_adreces %>%
   mutate(
     nom_carrer_join = coalesce(nom_carrer_bcn, nom_carrer)
   )
-names(BCN_adreces_users)
 
 BCN_adreces_users <- User_adreces %>%
   left_join(

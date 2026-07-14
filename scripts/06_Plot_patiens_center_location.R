@@ -1,11 +1,10 @@
 # ============================================================
 # 06_Plot_patients_center_location.R
 # ============================================================
-source(c)
+source(here("scripts", "00_setup.R"))
 
 
-nodes <- st_read(
-  c,
+nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
   quiet = TRUE
 )
 
@@ -99,19 +98,20 @@ plot_map<-ggplot() +
     aes(
       x = x,
       y = y,
-      fill = after_stat(nlevel)
+      fill = after_stat(density)
     ),
-    geom = "polygon",
-    contour = TRUE,
-    alpha = 0.45,
-    bins = 7,
-    h = c(400, 400),
+    geom = "raster",
+    contour = FALSE,
+    alpha = 0.50,
+    n = 300,
+    #bins = 8,
+    h = c(400, 400)
   ) +
   scale_fill_gradientn(
-    colours = c("#FDE0DD", "#FCAE91", "#FB6A4A", "#DE2D26", "#A50F15"),
+    colours = c("white", "#fee0d2", "#fcbba1", "#fc9272", "#fb6a4a","#ef3b2c","#cb181d","#99000d"),
     name = "Relative density",
     labels = percent_format(accuracy = 1),
-    values = rescale(c(0, 0.25, 0.5, 0.75, 1))
+    values = rescale(c(0, 0.20, 0.40, 0.60, 0.80, 1))
   ) +
   geom_point(
     data = patients_xy,
