@@ -1,18 +1,15 @@
 # ============================================================
 # 06_Plot_patients_center_location.R
 # ============================================================
+
 source(here("scripts", "00_setup.R"))
 
-
 nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
-  quiet = TRUE
-)
+  quiet = TRUE)
 
 trams <- st_read(
   here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
-  quiet = TRUE
-)
-
+  quiet = TRUE)
 
 Patients_locations_sf<-readRDS(here("data", "processed", "adreces_SF.rds"))
 
@@ -34,8 +31,7 @@ trams_sel <- trams %>%
 
 nodes_sel <- nodes[st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any), ]
 
-
-#pacients
+#Pacients
 
 patients_sf <- patients_sf %>%
   st_transform(st_crs(trams_sel))

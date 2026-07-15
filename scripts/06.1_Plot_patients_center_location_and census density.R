@@ -2,11 +2,10 @@
 # 060.1_Plot_patients_center_location_and_census_place.R
 # ============================================================
 
+
 source(here("scripts", "00_setup.R"))
 
-# ============================================================
 # 0. Parameters
-# ============================================================
 
 barrios_sel <- c("27", "08", "09", "20", "21", "19", "24", "25", "26", "17")
 districts_sel <- c("05", "02", "04")
@@ -16,9 +15,7 @@ density_palette <- c(
   "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d"
 )
 
-# ============================================================
 # 1. Load spatial data
-# ============================================================
 
 nodes <- st_read(
   here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
@@ -43,9 +40,7 @@ patients_locations_sf <- readRDS(
   here("data", "processed", "adreces_SF.rds")
 )
 
-# ============================================================
 # 2. Prepare street network and centres
-# ============================================================
 
 trams_sel <- trams %>%
   filter(Distric_E %in% districts_sel)
@@ -57,18 +52,8 @@ nodes_sel <- nodes[
 centros_sf <- centros_sf %>%
   st_transform(st_crs(trams_sel))
 
-# Optional: patient points from raw longitude/latitude
-patients_sf <- patients_locations_sf %>%
-  st_as_sf(
-    coords = c("lon_paciente", "lat_paciente"),
-    crs = 4326,
-    remove = FALSE
-  ) %>%
-  st_transform(st_crs(centros_sf))
 
-# ============================================================
 # 3. Load and prepare census population
-# ============================================================
 
 Pob_u_censal <- read_csv(
   here("data", "external", "2026_pad_mdbas_sexe.csv"),
@@ -99,13 +84,9 @@ Pob_u_censal_sel <- Pob_u_censal %>%
     Total_pob = as.numeric(homes + dones)
   )
 
-# ============================================================
 # 4. Aggregate patients by census section
-# ============================================================
 
-Patients_censal <- read_rds(
-  here("data", "Tables_DB", "Adreces_SF_ID.rds")
-) %>%
+Patients_censal <- patients_locations_sf%>%
   st_drop_geometry() %>%
   mutate(
     Seccio_Censal = paste0(
@@ -121,9 +102,7 @@ Patients_censal <- read_rds(
     .groups = "drop"
   )
 
-# ============================================================
 # 5. Join population and patients
-# ============================================================
 
 Patients_adreces_cens <- Pob_u_censal_sel %>%
   mutate(
@@ -138,9 +117,7 @@ Patients_adreces_cens <- Pob_u_censal_sel %>%
     Densitat = round(Patients / Total_pob * 1000, 2)
   )
 
-# ============================================================
 # 6. Prepare census polygons
-# ============================================================
 
 U_cens_sel <- U_cens %>%
   st_transform(st_crs(trams)) %>%
@@ -154,9 +131,7 @@ U_cens_sel <- U_cens %>%
   ) %>%
   filter(BARRI_txt %in% barrios_sel)
 
-# ============================================================
 # 7. Create map dataset
-# ============================================================
 
 map_censal <- U_cens_sel %>%
   left_join(
@@ -178,25 +153,48 @@ map_censal <- U_cens_sel %>%
     Densitat = coalesce(Densitat, 0)
   )
 
-# ============================================================
 # 8. Crop street network and define map limits
-# ============================================================
 
-trams_sel <- st_crop(trams_sel, st_bbox(map_censal))
+map_visible <- map_censal %>%
+  filter(!is.na(Densitat) & Densitat > 0)
 
-bb <- st_bbox(map_censal)
+# 1. Definir bbox solo del área que quieres mostrar
+bb <- st_bbox(map_visible)
 
-x_margin <- (bb["xmax"] - bb["xmin"]) * 0.03
-y_margin <- (bb["ymax"] - bb["ymin"]) * 0.03
+x_margin <- as.numeric(bb["xmax"] - bb["xmin"]) * 0.04
+y_margin <- as.numeric(bb["ymax"] - bb["ymin"]) * 0.04
 
-xlim_map <- c(bb["xmin"] - x_margin, bb["xmax"] + x_margin)
-ylim_map <- c(bb["ymin"] - y_margin, bb["ymax"] + y_margin)
+bbox_plot <- st_bbox(
+  c(
+    xmin = as.numeric(bb["xmin"]) - x_margin,
+    xmax = as.numeric(bb["xmax"]) + x_margin,
+    ymin = as.numeric(bb["ymin"]) - y_margin,
+    ymax = as.numeric(bb["ymax"]) + y_margin
+  ),
+  crs = st_crs(map_censal)
+)
 
-# ============================================================
+# Recortar DE VERDAD todos los objetos que entran en el mapa
+
+map_censal_plot <- suppressWarnings(st_crop(map_censal, bbox_plot))
+trams_plot <- suppressWarnings(st_crop(trams_sel, bbox_plot))
+centros_plot <- suppressWarnings(st_crop(centros_sf, bbox_plot))
+
+# Calcular límites desde el bbox recortado
+
+xlim_map <- c(
+  as.numeric(bbox_plot["xmin"]),
+  as.numeric(bbox_plot["xmax"])
+)
+
+ylim_map <- c(
+  as.numeric(bbox_plot["ymin"]),
+  as.numeric(bbox_plot["ymax"])
+)
+
 # 9. Quality checks
-# ============================================================
 
-map_censal %>%
+map_censal_plot %>%
   st_drop_geometry() %>%
   summarise(
     n_sections = n(),
@@ -206,33 +204,26 @@ map_censal %>%
     max_density = max(Densitat, na.rm = TRUE)
   )
 
-# Optional: check unmatched sections
-anti_join(
-  Patients_censal,
-  Pob_u_censal_sel %>%
-    mutate(Seccio_Censal = as.character(as.integer(Seccio_Censal))),
-  by = "Seccio_Censal"
-)
-
-# ============================================================
 # 10. Plot census-section density map
-# ============================================================
+st_bbox(map_censal)
+st_bbox(map_censal_plot)
+
 
 plot_censal <- ggplot() +
   geom_sf(
-    data = map_censal,
+    data = map_censal_plot,
     aes(fill = Densitat),
     color = "white",
     linewidth = 0.08
   ) +
   geom_sf(
-    data = trams_sel,
-    color = "grey15",
-    linewidth = 0.07,
-    alpha = 0.50
+    data = trams_plot ,
+    color = "black",
+    linewidth = 0.12,
+    alpha = 0.8
   ) +
   geom_sf(
-    data = centros_sf,
+    data = centros_plot,
     shape = 22,
     size = 3.4,
     fill = "grey90",
@@ -241,18 +232,22 @@ plot_censal <- ggplot() +
   ) +
   scale_fill_gradientn(
     colours = density_palette,
-    name = "Patients per 1,000 inhabitants",
+    name = "Patients/1,000 inhabitants",
+    limits = c(0, 25),
+    breaks = seq(0, 25, by = 5),
     na.value = "grey95"
   ) +
   coord_sf(
     xlim = xlim_map,
     ylim = ylim_map,
-    expand = FALSE
+    expand = FALSE,
+    clip = "on"
   ) +
   guides(
     fill = guide_colorbar(
       title.position = "top",
       title.hjust = 0.5,
+      title.vjust = 0.5,
       barwidth = unit(8, "cm"),
       barheight = unit(0.4, "cm")
     )
@@ -266,8 +261,11 @@ plot_censal <- ggplot() +
     
     legend.position = "bottom",
     legend.direction = "horizontal",
-    legend.title = element_text(size = 10, face = "bold"),
+    legend.title = element_text(size = 9,color = "black"),
     legend.text = element_text(size = 9),
+    legend.box.margin = margin(t = 0.5, r = 0, b = 0, l = 0),
+    legend.margin = margin(t = 0.5, r = 0, b = 0, l = 0),
+    legend.box.spacing = unit(0, "pt"),
     
     plot.title = element_text(size = 13, face = "bold"),
     plot.subtitle = element_text(size = 10, color = "grey30"),
@@ -282,16 +280,15 @@ plot_censal <- ggplot() +
 
 plot_censal
 
-# ============================================================
+
 # 11. Save figure
-# ============================================================
 
 ggsave(
-  filename = here("Output", "Figures", "patients_density_census_section.png"),
-  plot = plot_censal,
+  here("Output","Figures","patients_density_census_section.png"),
+  plot_censal,
   width = 11.69,
   height = 8.27,
   units = "in",
-  dpi = 300
+  dpi = 300,
+  bg = "white"
 )
-0
