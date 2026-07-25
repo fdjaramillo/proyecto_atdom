@@ -12,6 +12,8 @@ TB_Descrip<- set_names_to_df(TB_Descrip, metadata_dict) # poner etiquetas
 
 saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
 
+TB_Descrip<-readRDS(here("data","Final","TB_Descrip.RDS"))
+TB_Pacients<-readRDS(here("data","Tables_DB","TB_pacientes.RDS"))
 ### Descriptives
 
 method <- c(
@@ -68,7 +70,6 @@ write_xlsx(
   here("Output", "Tables", "table1_baseline_patologia.xlsx")
 )
 
-names(TB_Descrip)
 # Descriptiva Equip_Atdom, Equip_Inf, UAB_consulta y UAB_consulta_reforç
 Table_2_by_org <- descrTable(
   Home_based_PHC_org ~ . - ID,

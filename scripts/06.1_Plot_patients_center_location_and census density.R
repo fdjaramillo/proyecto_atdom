@@ -56,9 +56,16 @@ centros_sf <- centros_sf %>%
 # 3. Load and prepare census population
 
 Pob_u_censal <- read_csv(
-  here("data", "external", "2026_pad_mdbas_sexe.csv"),
+  here("data", "external", "2024_pad_mdbas_sexe.csv"),
   show_col_types = FALSE
 )
+
+Pob_u_censal_age <- read_csv(
+  here("data", "external", "2024_pad_mdbas_edat.csv"),
+  show_col_types = FALSE
+)
+
+# Changes in u_censal
 
 Pob_u_censal_sel <- Pob_u_censal %>%
   mutate(
@@ -84,6 +91,24 @@ Pob_u_censal_sel <- Pob_u_censal %>%
     Total_pob = as.numeric(homes + dones)
   )
 
+Pob_u_censal_age_sel <- Pob_u_censal_age %>%
+  mutate(
+    Codi_Barri_txt = str_pad(as.character(Codi_Barri), width = 2, pad = "0"),
+    Seccio_Censal = as.character(Seccio_Censal),
+    Valor = as.numeric(replace(Valor, Valor == "..", "0")),
+    EDAT_1 = as.numeric(EDAT_1)
+  ) %>%
+  filter(
+    Codi_Barri_txt %in% barrios_sel & EDAT_1>=18
+  ) %>%
+  group_by(Codi_Districte,Nom_Districte,Nom_Barri,AEB,Seccio_Censal,Codi_Barri_txt) %>%
+  summarise(
+    above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
+    above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
+    Total_pob = sum(Valor, na.rm = TRUE),
+    .groups = "drop"
+  )
+
 # 4. Aggregate patients by census section
 
 Patients_censal <- patients_locations_sf%>%
@@ -102,9 +127,10 @@ Patients_censal <- patients_locations_sf%>%
     .groups = "drop"
   )
 
-# 5. Join population and patients
+# Join population and patients
+head(Patients_censal)
 
-Patients_adreces_cens <- Pob_u_censal_sel %>%
+Patients_adreces_cens <- Pob_u_censal_age_sel %>%
   mutate(
     Seccio_Censal = as.character(as.integer(Seccio_Censal))
   ) %>%
@@ -114,8 +140,14 @@ Patients_adreces_cens <- Pob_u_censal_sel %>%
   ) %>%
   mutate(
     Patients = coalesce(Patients, 0L),
-    Densitat = round(Patients / Total_pob * 1000, 2)
+    Densitat_total = round(Patients / Total_pob * 1000, 2),
+    Densitat_total = round(Patients / above65y * 1000, 2),
+    Densitat_total = round(Patients / above75y * 1000, 2)
   )
+####calcualr pacientes por unidad censal y edad.. me quedo aqui
+above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
+above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
+
 
 # 6. Prepare census polygons
 
@@ -132,7 +164,7 @@ U_cens_sel <- U_cens %>%
   filter(BARRI_txt %in% barrios_sel)
 
 # 7. Create map dataset
-
+names(Patients_adreces_cens)
 map_censal <- U_cens_sel %>%
   left_join(
     Patients_adreces_cens %>%
@@ -140,7 +172,6 @@ map_censal <- U_cens_sel %>%
         Seccio_Censal,
         Codi_Districte,
         Nom_Districte,
-        Codi_Barri,
         Nom_Barri,
         Total_pob,
         Patients,
