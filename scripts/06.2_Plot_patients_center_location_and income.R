@@ -50,7 +50,7 @@ centros_sf <- centros_sf %>%
 
 
 Pob_u_censal <- read_csv(
-  here("data", "external", "2026_pad_mdbas_sexe.csv"),
+  here("data", "external", "2024_pad_mdbas_sexe.csv"),
   show_col_types = FALSE
 )
 
@@ -119,8 +119,7 @@ Patients_censal <- patients_locations_sf%>%
 Patients_censal_renda <- Patients_censal %>%
   left_join(
     Renta_media,
-    by = c(
-       "Seccio_Censal" ="SEC_CENS"))%>%
+    by = "Seccio_Censal")%>%
   select(Seccio_Censal,Patients,Media_renta_Hogar)
 
 map_renta_sel <- U_cens %>%

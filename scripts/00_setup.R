@@ -36,13 +36,6 @@ library(data.table)
 library(xlsx)
 
 
-#install.packages("keyring", type = "binary")
-
-#install.packages(
-#  "openrouteservice",
-#  repos = c("https://giscience.r-universe.dev", "https://cloud.r-project.org"),
-#  type = "source")
-
 # ---- General options ----
 
 options(
@@ -52,7 +45,4 @@ options(
 
 # ---- Source functions ----
 
-source(here("R", "utils_modeling.R"))
-source(here("R", "utils_transformations.R"))
-source(here("R", "utils_validation.R"))
 source(here("R", "utils_functions.R"))

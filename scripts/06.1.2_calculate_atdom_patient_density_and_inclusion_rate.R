@@ -1,7 +1,4 @@
-library(here)
-library(sf)
-library(tidyverse)
-
+source(here("scripts", "00_setup.R"))
 
 # load --------------------------------------------------------------------
 
