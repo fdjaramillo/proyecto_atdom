@@ -10,7 +10,6 @@ source(here("scripts", "00_setup.R"))
 barrios_sel <- c("27", "08", "09", "20", "21", "19", "24", "25", "26", "17")
 districts_sel <- c("05", "02", "04")
 
-
 # 1. Load spatial data
 
 nodes <- st_read(
@@ -36,18 +35,24 @@ patients_locations_sf <- readRDS(
   here("data", "processed", "adreces_SF.rds")
 )
 
+ABS_sf<-st_read(
+  here("data", "external", "cartografia_centres", "ABS.shp"),
+  quiet = TRUE
+)
+
 # 2. Prepare street network and centres
 
 trams_sel <- trams %>%
   filter(Distric_E %in% districts_sel)
 
 nodes_sel <- nodes[
-  st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any),
-]
+  st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any),]
+
+ABS_sel <- ABS_sf %>%
+  filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
 
 centros_sf <- centros_sf %>%
   st_transform(st_crs(trams_sel))
-
 
 Pob_u_censal <- read_csv(
   here("data", "external", "2024_pad_mdbas_sexe.csv"),
@@ -184,6 +189,12 @@ plot_renta_sel <- ggplot() +
     alpha = 0.7
   ) +
   geom_sf(
+    data = ABS_sel,
+    color = "black",
+    linewidth = 1,
+    fill = NA
+  ) +
+  geom_sf(
     data = centros_plot,
     shape = 22,
     size = 3.4,
@@ -242,7 +253,7 @@ plot_renta_sel
 
 ggsave(
   here("Output","Figures","patients_income_census_section.png"),
-  plot_censal,
+  plot_renta_sel,
   width = 11.69,
   height = 8.27,
   units = "in",

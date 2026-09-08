@@ -32,6 +32,11 @@ U_cens <- st_read(
   quiet = TRUE
 )
 
+ABS_sf<-st_read(
+  here("data", "external", "cartografia_centres", "ABS.shp"),
+  quiet = TRUE
+)
+
 centros_sf <- readRDS(
   here("data", "external", "Centres_estudi_adreces_sf.rds")
 )
@@ -46,11 +51,13 @@ trams_sel <- trams %>%
   filter(Distric_E %in% districts_sel)
 
 nodes_sel <- nodes[
-  st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any),
-]
+  st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any),]
 
 centros_sf <- centros_sf %>%
   st_transform(st_crs(trams_sel))
+
+ABS_sel <- ABS_sf %>%
+  filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
 
 
 # 3. Load and prepare census population
@@ -128,7 +135,6 @@ Patients_censal <- patients_locations_sf%>%
   )
 
 # Join population and patients
-head(Patients_censal)
 
 Patients_adreces_cens <- Pob_u_censal_age_sel %>%
   mutate(
@@ -145,8 +151,8 @@ Patients_adreces_cens <- Pob_u_censal_age_sel %>%
     Densitat_total = round(Patients / above75y * 1000, 2)
   )
 ####calcualr pacientes por unidad censal y edad.. me quedo aqui
-above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
-above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
+#above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
+#above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
 
 
 # 6. Prepare census polygons
@@ -175,13 +181,13 @@ map_censal <- U_cens_sel %>%
         Nom_Barri,
         Total_pob,
         Patients,
-        Densitat
+        Densitat_total
       ),
     by = "Seccio_Censal"
   ) %>%
   mutate(
     Patients = coalesce(Patients, 0L),
-    Densitat = coalesce(Densitat, 0)
+    Densitat = coalesce(Densitat_total, 0)
   )
 
 # 8. Crop street network and define map limits
@@ -252,6 +258,12 @@ plot_censal <- ggplot() +
     color = "black",
     linewidth = 0.12,
     alpha = 0.8
+  ) +
+  geom_sf(
+    data = ABS_sel,
+    color = "black",
+    linewidth = 1,
+    fill = NA
   ) +
   geom_sf(
     data = centros_plot,
