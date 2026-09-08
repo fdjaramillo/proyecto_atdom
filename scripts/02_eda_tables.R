@@ -2,10 +2,10 @@
 # 02_Base-line results.R
 # ============================================================
 
-
 source(here("scripts", "00_setup.R"))
 
-#Prep data_frame
+### Prep data_frame
+
 TB_Descrip <- readRDS(here("data","Tables_DB","TB_pacientes.RDS"))
 TB_Descrip <- apply_all_transformations(TB_pacientes, metadata_dict) # transformar
 TB_Descrip<- set_names_to_df(TB_Descrip, metadata_dict) # poner etiquetas
@@ -14,6 +14,7 @@ saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
 
 TB_Descrip<-readRDS(here("data","Final","TB_Descrip.RDS"))
 TB_Pacients<-readRDS(here("data","Tables_DB","TB_pacientes.RDS"))
+
 ### Descriptives
 
 method <- c(
@@ -32,9 +33,9 @@ method <- c(
   Hospital_Admissions= 2
 )
 
-# Total población ----------------------------------------------------------
+### Total población ----------------------------------------------------------
 
-# Descriptiva funcional y clínica 
+### Descriptiva funcional y clínica 
 
 baseline <- descrTable(
   ~ . - ID,

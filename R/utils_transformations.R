@@ -49,6 +49,7 @@ apply_incontinence <- function(df) {
 }
 
 # Transformador Lógica (Viu sol / Adeq llar)
+
 apply_logic_cat <- function(x, target_name) {
   if (target_name == "living_alone") {
   x <- if_else(is.na(x),"No viu sol/a",as.character(x))
@@ -63,6 +64,7 @@ apply_logic_cat <- function(x, target_name) {
 
 
 # transformador UAB
+
 apply_uab_mapping <- function(x, output_type = "name") {
   # 1. Definir el factor base con etiquetas
   levels_up <- c("00460", "00462", "00474", "00475", "00477", "00478", "01004")
