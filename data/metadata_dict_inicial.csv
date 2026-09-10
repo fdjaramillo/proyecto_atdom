@@ -1,0 +1,44 @@
+﻿n;orig_var;target_var;label;type;critical
+1;USUA_CIP;USUA_CIP;Patient ID;id;TRUE
+3;USUA_SEXE;sex_female;Sex (female);factor_sex;FALSE
+4;EDAT;Edat;Age (years);numeric;FALSE
+5;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
+6;GMA_PNIV;high_comorbidity;High comorbidity status (AMG index ≥p85);gma_strat;FALSE
+7;GMA_PNIV;GMA_groups;GMA Groups;ESTRATGMA;FALSE
+8;GMA_N_CRONIQUES;GMA_N_CRONIQUES;No. registered chronic diseases;numeric;FALSE
+9;GMA_COMPLEXITAT;GMA_CODE;Commorbidity and complexity;numeric;FALSE
+10;FRAGIL_VIG;FRAGIL_VIG;Fragil Vig index;numeric;FALSE
+11;PCC;PCC;PCC;PCC;FALSE
+12;MACA;MACA;MACA;MACA;FALSE
+13;BARTHEL;barthel_cat;Dependency according to Barthel Index for Activities of Daily Living;barthel;FALSE
+14;PFEIFER;pfeiffer_cat;Short Portable Mental Status Questionnaire;pfeiffer;FALSE
+15;IN_URINARIA;incontinence_cat;Incontinence;incontinence;FALSE
+16;IN_FECAL;incontinence_cat;Incontinence;incontinence;FALSE
+17;GIJON;social_risk;Social risk;gijon;FALSE
+18;TIRS;TIRS_cat;Social Risk (TIRS categorized);factor_TIRS_cat;FALSE
+19;TIRS;TIRS_num;Social Risk (TIRS numeric);numeric;FALSE
+20;VIU_SOL;living_alone;Living alone;logic_cat;FALSE
+21;ADEQ_LLAR;need_household_adapt;Need for any household adaptation;logic_cat;FALSE
+22;UP_ABS;Single_PHC;Healthcare center;Single_PHC;FALSE
+23;UP_ABS;Home_based_PHC_org;PHC Home Base organization;Home_based_PHC_org;FALSE
+24;UP_ABS;PHC_name;organit_atdom_2;PHC_name;FALSE
+25;IC;heart_failure;Heart failure;disease;FALSE
+26;Card. Isquémica;ischemic_heart;Ischemic heart disease;disease;FALSE
+27;Valvulopatía;valvulopathy;Valvulopathy;disease;FALSE
+28;Disrrítmias;arrhythmias;Arrhythmias;disease;FALSE
+29;Demencia;dementia;Dementia;disease;FALSE
+30;Parkinson;parkinson;Parkinson;disease;FALSE
+31;AVC;stroke;Stroke;disease;FALSE
+32;Diabetes;diabetes;Diabetes;disease;FALSE
+33;Hiperlipidemia;hyperlipidemia;Hyperlipidemia;disease;FALSE
+34;IRC;ckd;Chronic Kidney Disease;disease;FALSE
+35;EPOC;copd;COPD;disease;FALSE
+36;Insuf. Respiratoria;respiratory_failure;Respiratory failure;disease;FALSE
+37;Artrosis;osteoarthritis;Osteoarthritis;disease;FALSE
+38;Fractura de fémur;hip_fracture;Hip fracture;disease;FALSE
+39;Osteoporosis;osteoporosis;Osteoporosis;disease;FALSE
+40;Depressión;depression;Depression;disease;FALSE
+41;Ansiedad;anxiety;Anxiety;disease;FALSE
+42;Anemia;anemia;Anemia;disease;FALSE
+43;Infecciones urinarias;uti;Urinary tract infection;disease;FALSE
+44;Glaucoma;glaucoma;Glaucoma;disease;FALSE

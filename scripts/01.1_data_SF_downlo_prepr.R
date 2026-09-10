@@ -1,223 +1,379 @@
   
-  # ============================================================
-  # 01.1_SF DATA DOWLOAD AND PREPARATION.R
+# ============================================================
+# 01.1_SF DATA DOWLOAD AND PREPARATION.R
+# ============================================================ 
+
+library(here)  
+source(here("scripts", "00_setup.R"))
   
+# Download Adreces ajuntament de Barcelona SF object
   
-  source(here("scripts", "00_setup.R"))
-  
-  # Download Adreces ajuntament de Barcelons SF object
-  
-  Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
+Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
   
   download.file(
     url = Adreces,
     destfile = "data/adreces.csv",
     mode = "wb"
   )
+
+BCN_adreces<- st_read("data/adreces.csv")
+
+# Download codis carrer de Barcelona
+
+Codis_carrerer<- "https://opendata-ajuntament.barcelona.cat/data/dataset/d7802fd1-cdfb-4562-9148-d18722d7e2d8/resource/2b010e59-6952-4b27-9c4e-47fcaf64c916/download"
   
-  BCN_adreces<- st_read("data/adreces.csv")
+download.file(
+    url = Codis_carrerer,
+    destfile = "data/carrerer.csv",
+    mode = "wb"
+  )
+
+Codis_carrerer<- st_read("data/carrerer.csv")
+############ Merge carrerer amb graf edificis pero obtenir codi de tipus de vial #########
+
+BCN_adreces_rc<-BCN_adreces%>%
   
-  ### Problema amb UTS sense coordanades (borro) i alguns canvis inicials de majuscules
+  left_join(Codis_carrerer[,c(1,3,4,5)],
+            by=c("codi_carrer"="codi_via"))%>%
+ 
+  mutate(Seccio_Censal = paste0(
+                                as.integer(districte),
+                                str_pad(as.character(secc_cens), width = 3, pad = "0")),
+            
+          llepost_i=trimws(llepost_i),
+          llepost_i = na_if(llepost_i,""),
+          codi_parc=trimws(codi_parc),
+          codi_parc = na_if(codi_parc,""))%>%
+  
+  filter(
+    #barri %in% c("27", "07","08", "09", "20", "21", "19", "24", "25", "26", "17"),
+    #     districte %in% c("05", "02", "04"),
+         !is.na(codi_parc)) %>%
+  
+  group_by(tipus_via, nom_carrer, numpost_i) %>%
+  arrange(is.na(llepost_i), .by_group = TRUE) %>%
+  filter(
+    n() == 1 |                    # única fila → conservar
+      !is.na(llepost_i) |           # varias → solo con letra
+      row_number() == 1             # todas vacías → la primera
+  ) %>%
+  ungroup()
+
+BCN_adreces_rc <- BCN_adreces_rc %>%
+  distinct(tipus_via, nom_carrer, numpost_i, .keep_all = TRUE)
+
+
+### Problema amb UTS sense coordanades (borro) i alguns canvis inicials de majuscules
   
   # Limpieza inicial:
-  # - Filtre barris de referència
   # - eliminar registros sin coordenadas
-  # - convertir coordenadas a numéricas
   # - normalizar nombre de calle
   # - crear USUA_NUMERO a partir de numpost_i
-  
-  BCN_adreces <- BCN_adreces %>%
-    st_drop_geometry() %>%
-    filter(barri %in% c("27","08","09","20","21","19","24","25","26","17"))%>%
-    mutate(
-      # Coordenadas
-      x_etrs89 = as.numeric(na_if(as.character(x_etrs89), "")),
-      y_etrs89 = as.numeric(na_if(as.character(y_etrs89), "")),
-      longitud_wgs84 = as.numeric(na_if(as.character(longitud_wgs84), "")),
-      latitud_wgs84 = as.numeric(na_if(as.character(latitud_wgs84), "")),
-      
-      # Nombre de calle normalizado
+
+BCN_adreces_rc <- BCN_adreces_rc %>%
+     mutate(
+       
+  # Nombre de calle normalizado
       nom_carrer = normaliza_carrer(nom_carrer),
-      
-      # Rango de numeración del portal
-      num_i = as.integer(str_remove(as.character(numpost_i), "^0+")),
-      num_f = as.integer(str_remove(as.character(numpost_f), "^0+")),
-      
-      # Si numpost_f está vacío, asumimos portal exacto
-      num_f = if_else(is.na(num_f), num_i, num_f)
-    ) %>%
+      numpost_i  = as.integer(numpost_i),
+  
+  # Rango de numeración del portal
+      numpost_i = as.integer(str_remove(as.character(numpost_i), "^0+")),
+      numpost_f = as.integer(str_remove(as.character(numpost_f), "^0+")),
+  
+  #Clave
+     Clave = paste(tipus_via,nom_carrer,numpost_i,sep = "|"))%>%
+  
     filter(
       !is.na(nom_carrer),
       nom_carrer != "",
-      !is.na(num_i),
-      !is.na(num_f),
+      !is.na(numpost_i),
       !is.na(x_etrs89),
       !is.na(y_etrs89)
-    ) %>%
+      ) %>%
     select(
-      nom_carrer,
-      num_i,
-      num_f,
       codi_carrer,
+      tipus_via,
+      Clave,
+      codi_parc,
+      nom_carrer,
+      nom_curt,
+      nom_oficial,
+      llepost_i,
+      llepost_f,
+      numpost_i,
+      numpost_f,
+      dist_post,
       districte,
       nom_districte,
       barri,
       nom_barri,
-      secc_est,
-      secc_cens,
+      Seccio_Censal,
       x_etrs89,
       y_etrs89,
       longitud_wgs84,
       latitud_wgs84
-    ) %>%
-    as.data.table()
+    ) 
+
+# Resumen no hay duplicados por calle y numero 
+BCN_adreces_rc %>%
+  count(Clave, sort = TRUE) %>%
+  filter(n > 1)
+
+BCN_adreces_rc %>%
+  count(longitud_wgs84, sort = TRUE) %>%
+  filter(is.na(n))
+
+####### Carrers pacients #########
   
-  BCN_adreces <- BCN_adreces[
-    ,
-    .(
-      codi_carrer = first(codi_carrer),
-      districte = first(districte),
-      nom_districte = first(nom_districte),
-      barri = first(barri),
-      nom_barri = first(nom_barri),
-      secc_est = first(secc_est),
-      secc_cens = first(secc_cens),
-      x_etrs89 = x_etrs89,
-      y_etrs89 = y_etrs89,
-      longitud_wgs84 = longitud_wgs84,
-      latitud_wgs84 = latitud_wgs84,
-      n_adreces_originals = .N
-    ),
-    by = .(nom_carrer, num_i, num_f)
-  ]
-  
-  BCN_adreces<- st_as_sf(
-    BCN_adreces,
-    coords = c("x_etrs89", "y_etrs89"),
-    crs = 25831,
-    remove = FALSE
-  )
-  
-  ## Carrers pacients
-  
-  User_adreces<- readRDS(here("data", "external", "id_adreces_ID.rds")
-  )
-  
-  User_adreces <- User_adreces %>%
+User_adreces<- readRDS(here("data", "Starting", "ADRECES_FINAL_inicial.rds"))
+
+##### Transformació tipus de vial ######
+
+User_adreces <- User_adreces %>%
+  filter(Residencia=="NO")%>%
     mutate(
-      nom_carrer = normaliza_carrer(USUA_CARRER),
-      USUA_NUMERO = as.numeric(USUA_NUMERO)
+      nom_carrer = normaliza_carrer(nom_carrer),
+      numpost_i = as.integer(numpost_i),
+      tipus_via = case_when(
+        USUA_TIPUS_DE_VIAL == "CR" ~ "C",
+        USUA_TIPUS_DE_VIAL == "AV" ~ "Av",
+        USUA_TIPUS_DE_VIAL == "TS" ~ "Trav",
+        USUA_TIPUS_DE_VIAL == "PL" ~ "Pl",
+        USUA_TIPUS_DE_VIAL == "RI" ~ "Rier",
+        USUA_TIPUS_DE_VIAL == "PG" ~ "Ptge",
+        USUA_TIPUS_DE_VIAL == "BX" ~ "Bda",
+        USUA_TIPUS_DE_VIAL == "PS" ~ "Pg",
+        USUA_TIPUS_DE_VIAL == "VI" ~ "Via",
+        USUA_TIPUS_DE_VIAL == "RD" ~ "Rda",
+        USUA_TIPUS_DE_VIAL == "GV" ~ "G.V.",
+        USUA_TIPUS_DE_VIAL == "RB" ~ "Rbla",
+      )
     )
-  
-  ### Problemes de codificació dels carrers en DF EHR hacer igual que la denominación original.
-  
-  equivalencias_carrers <- tribble(
-    ~nom_carrer_user,                    ~nom_carrer_bcn,
+
+######## Problemes de codificació dels carrers en DF EHR hacer igual que la denominación original. #######
+
+User_adreces <- User_adreces %>%
+  mutate(
+    # Normalizar el nombre original
+    nom_carrer_norm = normaliza_carrer(nom_carrer),
     
-    "CADIS",                             "CADIS",
-    "AGUSTINA DE SARAGOSSA",             "AGUSTINA SARAGOSSA",
-    "BERTRAN I ROZPIDE",                 "BELTRAN I ROZPIDE",
-    "JOAN SEBASTIA BACH",                "JOHANN SEBASTIAN BACH",
-    "DE CARLES III",                     "CARLES III",
-    "DE LES CORTS",                      "CORTS",
-    "SOR EULALIA ANZIZU",                "SOR EULALIA D ANZIZU",
-    "PRESIDENT JOSEP IRLA I BOSCH",      "JOSEP IRLA I BOSCH",
-    "RICARD CALVO",                      "RICARDO CALVO",
-    "DELS SEGADORS",                     "SEGADORS",
-    "SANT GENIS",                        "SANT GENIS A HORTA",
-    "MESTRE ANTONI NICOLAU",             "MESTRE NICOLAU",
-    "LA TORRE",                          "TORRE",
-    "LA ALFAMBRA",                       "ALFAMBRA",
-    "ALFONS I",                          "ALFONS XII",
-    "CIUTAT BALAGUER",                   "CIUTAT DE BALAGUER",
-    "COMTE SALVATIERRA",                 "COMTE DE SALVATIERRA",
-    "DOMINGUEZ MIRALLES",                "DOMINGUEZ I MIRALLES",
-    "D'EN PUJOL",                        "PUJOL",
-    "DE GRACIA",                         "GRACIA",
-    "DE MALLORCA",                       "MALLORCA",
-    "DE BADAL",                          "BADAL",
-    "DE NAVARRA",                        "NAVARRA",
-    "DE XILE",                           "XILE",
-    "EMPEDRAT",                          "PEDRALBES",
-    "AGUILO",                            "PUIG AGUILAR",
-    "JOAN FERNANDEZ",                    "JOAN FERRANDIZ",
-    "DE PAU CASALS",                     "PAU CASALS",
-    "DE JOSEP TARRADELLAS",              "JOSEP TARRADELLAS",
-    "DE LA RIERA DE CASSOLES",           "RIERA DE CASSOLES",
-    "DEL MESTRE ANTONI NICOLAU",         "MESTRE NICOLAU",
-    "COMTE D URGELL",                    "COMTE D URGELL",
-    "COMTES DE BELL LLOC",               "COMTES DE BELL LLOC",
-    "SABINO DE ARANA",                   "SABINO ARANA",
-    "VALL D HEBRON",                     "VALL D HEBRON",
-    "LA LLACUNA",                        "LLACUNA",
-    "MARQUES DE MONT ROIG",              "MONT ROIG",
-    "COMES",                             "COMAS",
-    "PARC",                              "PARC",
-    "APEL LES MESTRES",                  "APEL LES MESTRES",
-    "CARAVEL LA NINA",                   "CARAVEL LA LA NINA",
-    "GAL LA PLACIDIA",                   "GAL LA PLACIDIA",
-    "PARAL LEL",                         "PARAL LEL",
-    "PUIG REIG",                         "PUIG REIG",
-    "FRANCESC PEREZ CABRERO",            "FRANCESC PEREZ CABRERO",
-    "MARIA CUBI I SOLER",                "MARIA CUBI",
-    "RIERA BLANCA",                      "BLANCA",
-    "DE BOSCH I GIMPERA",                "BOSCH I GIMPERA",
-    "DE CAN MARCET",                     "CAN MARCET",
-    "DEL PARE MARIANA",                  "PARE MARIANA",
-    "DOCTOR IBANEZ",                     "DOCTOR IBANEZ",
-    "GARBI",                             "GARBI",
-    "ABAT OLIBA",                        "ABAT OLIBA",
-    "ADVOCAT MANUEL BALLBE",             "MANUEL BALLBE"
+    # Aplicar equivalencias
+    nom_carrer_join = case_when(
+      # Quitar "DE" o artículos
+      nom_carrer_norm == normaliza_carrer("AGUSTINA DE SARAGOSSA") ~ "AGUSTINA SARAGOSSA",
+      nom_carrer_norm == normaliza_carrer("DE CARLES III") ~ "CARLES III",
+      nom_carrer_norm == normaliza_carrer("DE LES CORTS") ~ "CORTS",
+      nom_carrer_norm == normaliza_carrer("DE GRACIA") ~ "GRACIA",
+      nom_carrer_norm == normaliza_carrer("DE MALLORCA") ~ "MALLORCA",
+      nom_carrer_norm == normaliza_carrer("DE XILE") ~ "XILE",
+      nom_carrer_norm == normaliza_carrer("DE PAU CASALS") ~ "PAU CASALS",
+      nom_carrer_norm == normaliza_carrer("DE JOSEP TARRADELLAS") ~ "JOSEP TARRADELLAS",
+      nom_carrer_norm == normaliza_carrer("DE LA RIERA DE CASSOLES") ~ "RIERA DE CASSOLES",
+      nom_carrer_norm == normaliza_carrer("DE BOSCH I GIMPERA") ~ "BOSCH I GIMPERA",
+      nom_carrer_norm == normaliza_carrer("DE CAN MARCET") ~ "CAN MARCET",
+      nom_carrer_norm == normaliza_carrer("DEL PARE MARIANA") ~ "PARE MARIANA",
+      nom_carrer_norm == normaliza_carrer("DEL MESTRE ANTONI NICOLAU") ~ "MESTRE NICOLAU",
+      nom_carrer_norm == normaliza_carrer("D'EN PUJOL") ~ "PUJOL",
+      nom_carrer_norm == normaliza_carrer("SABINO DE ARANA") ~ "SABINO ARANA",
+      nom_carrer_norm == normaliza_carrer("LA LLACUNA") ~ "LLACUNA",
+      nom_carrer_norm == normaliza_carrer("LA TORRE") ~ "TORRE",
+      nom_carrer_norm == normaliza_carrer("LA ALFAMBRA") ~ "ALFAMBRA",
+      nom_carrer_norm == normaliza_carrer("RIERA BLANCA") ~ "BLANCA",
+      nom_carrer_norm == normaliza_carrer("DELS SEGADORS") ~ "SEGADORS",
+      nom_carrer_norm == normaliza_carrer("MARQUES DE MONT ROIG") ~ "MONT ROIG",
+      nom_carrer_norm == normaliza_carrer("ADVOCAT MANUEL BALLBE") ~ "MANUEL BALLBE",
+      
+    # Correcciones ortográficas
+      nom_carrer_norm == normaliza_carrer("BERTRAN I ROZPIDE") ~ "BELTRAN I ROZPIDE",
+      nom_carrer_norm == normaliza_carrer("JOAN SEBASTIA BACH") ~ "JOHANN SEBASTIAN BACH",
+      nom_carrer_norm == normaliza_carrer("SOR EULALIA ANZIZU") ~ "SOR EULALIA D ANZIZU",
+      nom_carrer_norm == normaliza_carrer("PRESIDENT JOSEP IRLA I BOSCH") ~ "JOSEP IRLA I BOSCH",
+      nom_carrer_norm == normaliza_carrer("RICARD CALVO") ~ "RICARDO CALVO",
+      nom_carrer_norm == normaliza_carrer("COMES") ~ "COMAS",
+      nom_carrer_norm == normaliza_carrer("SANT GENIS") ~ "SANT GENIS A HORTA",
+      nom_carrer_norm == normaliza_carrer("MESTRE ANTONI NICOLAU") ~ "MESTRE NICOLAU",
+      
+    # Añadir palabras faltantes
+      nom_carrer_norm == normaliza_carrer("CIUTAT BALAGUER") ~ "CIUTAT DE BALAGUER",
+      nom_carrer_norm == normaliza_carrer("COMTE SALVATIERRA") ~ "COMTE DE SALVATIERRA",
+      nom_carrer_norm == normaliza_carrer("DOMINGUEZ MIRALLES") ~ "DOMINGUEZ I MIRALLES",
+      nom_carrer_norm == normaliza_carrer("CARAVEL LA NINA") ~ "CARAVEL LA LA NINA",
+      nom_carrer_norm == normaliza_carrer("MARIA CUBI I SOLER") ~ "MARIA CUBI",
+      
+    # Si no coincide con nada, dejar el valor original
+      TRUE ~ nom_carrer_norm
+    ),
+    tipus_via = case_when(
+      nom_carrer_join == "MANUEL GIRONA" & tipus_via == "C"  ~  "Pg",
+      TRUE ~ tipus_via),
+    
+    Clave = paste(
+      tipus_via,nom_carrer_join,numpost_i,sep = "|")
   )%>%
-    mutate(
-      nom_carrer_user = normaliza_carrer(nom_carrer_user),
-      nom_carrer_bcn = normaliza_carrer(nom_carrer_bcn)
-    ) %>%
-    distinct(nom_carrer_user, .keep_all = TRUE)
+  select(-nom_carrer_norm)   
+
+# Join SF carrers de BCN amb adreces users. Identificacions postals.
+
+BCN_adreces_users <- User_adreces %>%
+  left_join(
+    BCN_adreces_rc %>% select(-tipus_via, -nom_carrer, -numpost_i),
+    by = "Clave"
+  ) %>%
+  distinct(USUA_CIP_RCA, .keep_all = TRUE) %>%
+  filter(!is.na(x_etrs89) | !is.na(y_etrs89))
+
+BCN_adreces_users_SF <- st_as_sf(
+  BCN_adreces_users,
+  coords = c("x_etrs89", "y_etrs89"),
+  crs    = 25831,
+  remove = FALSE)
+
+BCN_adreces_users_SF<-st_make_valid(BCN_adreces_users_SF)
+
+#Perímetre de les ABS dels centres participants.
   
-  User_adreces <- User_adreces %>%
-    left_join(
-      equivalencias_carrers,
-      by = c("nom_carrer" = "nom_carrer_user")
-    ) %>%
-    mutate(
-      nom_carrer_join = coalesce(nom_carrer_bcn, nom_carrer)
-    )
-  
-  BCN_adreces_users <- User_adreces %>%
-    left_join(
-      BCN_adreces,
-      by = c(
-        "nom_carrer_join" = "nom_carrer",
-        "USUA_NUMERO" = "num_i"),
-      relationship = "many-to-many"
-    )%>%
-    distinct(ID, .keep_all = TRUE)
-  
-  BCN_adreces_users <- BCN_adreces_users %>%
+ABS_sf<-st_read(
+    here("data", "external", "cartografia_centres", "ABS.shp"),
+    quiet = TRUE
+  )
+
+ABS_sel <- ABS_sf %>%
+  filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
+
+ABS_sel <- st_make_valid(ABS_sel)
+
+##Nova columna inclusion
+
+BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
+  st_join(
+    ABS_sel %>% select(CODABSa, NOMABS),
+    join = st_intersects,
+    left = TRUE
+  ) %>%
+  mutate(
+    included = if_else(is.na(CODABSa), "no included", "included")
+  ) %>%
+  distinct(USUA_CIP_RCA, .keep_all = TRUE)
+
+nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
+                 quiet = TRUE)
+
+
+trams <- st_read(
+  here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
+  quiet = TRUE)
+
+trams_sel <- trams %>%
+  filter(Distric_E %in% c("05","02","04"))
+
+nodes_sel <- nodes[st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any), ]
+
+# 1. Primero los polígonos (fondo), con transparencia
+
+library("mapview")
+library("leaflet")
+library("htmlwidgets")
+
+sep_metros <- 8 
+
+BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
+  mutate(
+    x = st_coordinates(.)[, 1],
+    y = st_coordinates(.)[, 2]
+  ) %>%
+  group_by(x, y) %>%
+  mutate(
+    n_grupo = n(),
+    idx     = row_number(),
+    # Centro de la línea: los puntos se distribuyen simétricamente
+    # respecto a la coordenada original
+    offset  = (idx - (n_grupo + 1) / 2) * sep_metros,
+    # Si el grupo tiene 1 solo punto, offset = 0 → queda en su sitio
+    offset  = if_else(n_grupo == 1, 0, offset),
+    # Desplazamiento horizontal
+    x_vis   = x + offset,
+    y_vis   = y
+  ) %>%
+  ungroup() %>%
+  st_drop_geometry() %>%
+  st_as_sf(coords = c("x_vis", "y_vis"), crs = 25831, remove = FALSE)
+
+##primer mapa que se visualiza
+
+mapview(ABS_sel, col.regions = "lightblue", alpha.regions = 0.3, 
+        legend = FALSE, layer.name = "ABS") +
+  mapview(trams, color = "black", lwd = 2, legend = FALSE, layer.name = "Trams") +
+  mapview(BCN_adreces_users_SF, 
+          zcol = "included",
+          col.regions = c("included" = "red", "no included" = "black"),
+          cex = 4,
+          label = BCN_adreces_users_SF$USUA_CIP,
+          layer.name = "Usuarios")
+
+plot(st_geometry(ABS_sel),
+     col = adjustcolor("lightblue", alpha.f = 0.3),
+     border = "blue",
+     main = "Puntos incluidos en ABS")
+
+# 2. Luego las líneas
+plot(st_geometry(trams),
+     col = "black",
+     add = TRUE)
+
+# 3. Finalmente los puntos encima
+
+plot(st_geometry(BCN_adreces_users_SF),
+     col = ifelse(BCN_adreces_users_SF$included == "included", "red", "black"),
+     pch = 20,
+     cex = 0.7,
+     add = TRUE)
+
+
+BCN_adreces_users <- BCN_adreces_users %>%
     filter(!is.na(x_etrs89) | !is.na(y_etrs89)) %>%
-    filter(!USUA_CARRER %in% c("CONSELL DE CENT","CORTS CATALANES","QUATRE CAMINS","POMARET")) %>%
-    filter(!ID %in% c("947","2053","498"))%>%
-    arrange(ID)
+    filter(!nom_carrer %in% c("CONSELL DE CENT","CORTS CATALANES","QUATRE CAMINS","POMARET"))
   
-  BCN_adreces_users_SF <- BCN_adreces_users %>%
+BCN_adreces_users_SF <- BCN_adreces_users %>%
     st_as_sf(
       coords = c("x_etrs89", "y_etrs89"),
       crs = 25831,
       remove = FALSE
     )
   
-  saveRDS(
+saveRDS(
     BCN_adreces_users_SF,
     here("data", "processed", "adreces_SF.rds")
   )
   
-  saveRDS(
+saveRDS(
     BCN_adreces_users_SF,
     here("data", "Tables_DB", "Adreces_SF_ID.rds")
   )
+
+BCN_included_df <- BCN_adreces_users_SF %>%
+  filter(included == "included") %>%
+  st_drop_geometry() %>%
+  select(
+    ID, USUA_CIP, USUA_CIP_RCA,
+    USUA_SITUACIO, SITUACIO_2026,
+    USUA_TIPUS_DE_VIAL, nom_carrer, numpost_i,
+    USUA_ESCALA, USUA_PORTAL, USUA_PORTA,
+    USUA_CODI_POSTAL, USUA_NOM_LOCALITAT, USUA_UP_RESID,
+    USUA_DATA_DEFUNCIO, Residencia,
+    tipus_via, nom_carrer_join, Clave,
+    codi_carrer, codi_parc, nom_curt, nom_oficial,
+    llepost_i, llepost_f, numpost_f, dist_post,
+    districte, nom_districte, barri, nom_barri,
+    Seccio_Censal,
+    x_etrs89, y_etrs89, longitud_wgs84, latitud_wgs84,
+    CODABSa, NOMABS,
+    included
+  )
+
+saveRDS(BCN_included_df,here("data", "Starting", "Pacients_en_zona_final.rds"))
   
-  # Coordenades Centres
+# Coordenades Centres
   
   centres<- "https://opendata-ajuntament.barcelona.cat/data/dataset/b959dce3-4862-4697-a158-63f8b15ed4f3/resource/9e135848-eb0a-4bc5-8e60-de558213b3ed/download"
   
@@ -268,15 +424,16 @@
   )
   
   #Pacients a centre amb dades SF per a routes.
-  
-  Patients_locations <- BCN_adreces_users_SF %>%
+
+Patients_locations <- BCN_adreces_users_SF %>%
     st_drop_geometry() %>%
+  filter(included == "included") 
     transmute(
       ID = ID,
       codi_carrer = codi_carrer,
-      nom_carrer = nom_carrer_join,
+      nom_carrer = nom_carrer,
       numero_Carrer = USUA_NUMERO,
-      secc_censal = secc_cens,
+      secc_censal = Seccio_Censal,
       districte = districte,
       barri = barri,
       nom_barri = nom_barri,

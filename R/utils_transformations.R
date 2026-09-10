@@ -33,6 +33,13 @@ apply_pfeiffer <- function(x) {
   )
 }
 
+# Transformador disease
+apply_disease <- function(x) {
+  case_when(x==0~"no",
+            x!=0~"si",
+            TRUE~"no")
+}
+
 # Transformador Incontinencia
 apply_incontinence <- function(df) {
   if (!all(c("IN_URINARIA", "IN_FECAL") %in% colnames(df))) {
@@ -137,6 +144,7 @@ apply_all_transformations <- function(df, dict) {
       "Time_Follow_Up_PC_Emergency_unit"   = ifelse(is.na(val), 407, val), # Si Na, 407
       "Time_follow_up_emergency_d"         = ifelse(is.na(val), 407, val), # Si Na, 407
       "Time_follow_up_hospital_admission"  = ifelse(is.na(val), 407, val), # Si Na, 407
+      "PHC_name"      = apply_uab_mapping(val, "name"),
       
       df_trans[[row$target_var]] # Default: no tocar
     )
@@ -167,6 +175,71 @@ set_names_to_df <- function(df, dict) {
   labels_vector <- setNames(as.list(labels_list$label), labels_list$target_var)
   var_label(df) <- labels_vector
 
+  return(df)
+}
+
+# orquestador inicial-------------------------------------------------------------
+
+apply_all_transformations_inicial <- function(df, dict) {
+  df_trans <- df
+  
+  for (i in 1:nrow(dict)) {
+    row <- dict[i, ]
+    if (!row$orig_var %in% colnames(df)) next
+    
+    val <- df[[row$orig_var]]
+    
+    df_trans[[row$target_var]] <- switch(row$type,
+                                         "numeric"       = as.numeric(val),
+                                         "factor_status" = factor(ifelse(val == "A", "Yes", "No")),
+                                         "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")),
+                                         "date_diff"     = as.numeric(difftime(as.Date("2024-12-16"), as.Date(val), units = "days") / 365.25),
+                                         "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
+                                         "GMA_groups"    = as.factor(val),
+                                         "barthel"       = apply_barthel(val),
+                                         "pfeiffer"      = apply_pfeiffer(val),
+                                         "PCC"           = apply_PCC(val),
+                                         "GMA_CODE"      = as.numeric(val),
+                                         "MACA"          = apply_MACA(val),
+                                         "TIRS_cat"      = factor(apply_TIRS(val)),
+                                         "TIRS"          = as.numeric(val),
+                                         "gijon"         = factor(ifelse(val > 11, "Yes", "No")),
+                                         "logic_cat"     = apply_logic_cat(val, row$target_var),
+                                         "percentage"    = val * 100,
+                                         "PHC_name"      = apply_uab_mapping(val, "name"),
+                                         "Single_PHC"    = apply_uab_mapping(val, "org1"),
+                                         "Home_based_PHC_org" = apply_uab_mapping(val, "org2"),
+                                         "id"            = as.character(val),
+                                         "disease"       = apply_disease(val),
+                                         df_trans[[row$target_var]]
+    )
+  }
+  
+  # Incontinencia
+  if ("incontinence" %in% dict$type) {
+    df_trans$incontinence_cat <- apply_incontinence(df)
+  }
+  
+  # Seleccionar solo variables target
+  final_vars <- unique(dict$target_var)
+  df_trans <- df_trans |> select(any_of(final_vars))
+  
+  return(df_trans)
+}
+
+
+# setear nombres ----------------------------------------------------------
+
+set_names_to_df <- function(df, dict) {
+  # Filtramos el dict para quedarnos solo con las variables del df final
+  labels_list <- dict |>
+    filter(target_var %in% colnames(df)) |>
+    select(target_var, label) |>
+    distinct(target_var, .keep_all = TRUE)
+  
+  labels_vector <- setNames(as.list(labels_list$label), labels_list$target_var)
+  var_label(df) <- labels_vector
+  
   return(df)
 }
 

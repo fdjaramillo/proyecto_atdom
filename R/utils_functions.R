@@ -124,4 +124,4 @@ normaliza_carrer <- function(x) {
     str_replace_all("'", " ") %>%
     str_squish()
 }
-
+  

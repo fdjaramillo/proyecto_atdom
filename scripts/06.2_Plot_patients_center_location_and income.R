@@ -174,7 +174,6 @@ income_palette <- c(
 )
 
 
-
 plot_renta_sel <- ggplot() +
   geom_sf(
     data = map_renta_sel,
