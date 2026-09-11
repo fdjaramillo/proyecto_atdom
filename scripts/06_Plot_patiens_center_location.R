@@ -246,3 +246,82 @@ plot_map2 <- ggplot() +
 
 # Convertir a interactivo con plotly
 ggplotly(plot_map2, tooltip = "text")
+
+#### Alternativa plot pacients mapa interactivo
+
+
+
+nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
+                 quiet = TRUE)
+
+
+trams <- st_read(
+  here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
+  quiet = TRUE)
+
+trams_sel <- trams %>%
+  filter(Distric_E %in% c("05","02","04"))
+
+nodes_sel <- nodes[st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any), ]
+
+# 1. Primero los polígonos (fondo), con transparencia
+
+library("mapview")
+library("leaflet")
+library("htmlwidgets")
+
+sep_metros <- 8 
+
+BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
+  mutate(
+    x = st_coordinates(.)[, 1],
+    y = st_coordinates(.)[, 2]
+  ) %>%
+  group_by(x, y) %>%
+  mutate(
+    n_grupo = n(),
+    idx     = row_number(),
+    # Centro de la línea: los puntos se distribuyen simétricamente
+    # respecto a la coordenada original
+    offset  = (idx - (n_grupo + 1) / 2) * sep_metros,
+    # Si el grupo tiene 1 solo punto, offset = 0 → queda en su sitio
+    offset  = if_else(n_grupo == 1, 0, offset),
+    # Desplazamiento horizontal
+    x_vis   = x + offset,
+    y_vis   = y
+  ) %>%
+  ungroup() %>%
+  st_drop_geometry() %>%
+  st_as_sf(coords = c("x_vis", "y_vis"), crs = 25831, remove = FALSE)
+
+##primer mapa que se visualiza
+
+mapview(ABS_sel, col.regions = "lightblue", alpha.regions = 0.3, 
+        legend = FALSE, layer.name = "ABS") +
+  mapview(trams, color = "black", lwd = 2, legend = FALSE, layer.name = "Trams") +
+  mapview(BCN_adreces_users_SF, 
+          zcol = "included",
+          col.regions = c("included" = "red", "no included" = "black"),
+          cex = 4,
+          label = BCN_adreces_users_SF$USUA_CIP,
+          layer.name = "Usuarios")
+
+plot(st_geometry(ABS_sel),
+     col = adjustcolor("lightblue", alpha.f = 0.3),
+     border = "blue",
+     main = "Puntos incluidos en ABS")
+
+# 2. Luego las líneas
+plot(st_geometry(trams),
+     col = "black",
+     add = TRUE)
+
+# 3. Finalmente los puntos encima
+
+plot(st_geometry(BCN_adreces_users_SF),
+     col = ifelse(BCN_adreces_users_SF$included == "included", "red", "black"),
+     pch = 20,
+     cex = 0.7,
+     add = TRUE)
+
+
