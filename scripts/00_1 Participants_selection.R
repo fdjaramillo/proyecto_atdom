@@ -1,9 +1,8 @@
 # ============================================================
-# 01_data_prep.R
+# 00_1 Participants Selection.R
 # ============================================================
 
-source(here("scripts", "00_setup.R"))
-
+source(here("scripts", "00_0 setup.R"))
 
 # PARTICIPANTS SELECTION.
 # In zone
@@ -116,6 +115,7 @@ BCN_adreces_codis <- BCN_adreces_codis %>%
 
 
 # Checks no hay duplicados por calle y numero 
+
 BCN_adreces_codis %>%
   count(Clave, sort = TRUE) %>%
   filter(n > 1)
@@ -262,15 +262,15 @@ BCN_adreces_users_SF_included <- BCN_adreces_users_SF %>%
 
 ## Saver IDs de pacients en zona
 
-ID_not_in_zone<-BCN_adreces_users_SF%>%
+ID_in_zone<-BCN_adreces_users_SF%>%
   select(ID,included)%>%
   as_tibble()%>%
   select(-geometry)
 
-ID_in_zone<-ID_not_in_zone%>%
+ID_in_zone<-ID_in_zone%>%
   filter(included=="included")
 
-saveRDS(ID_in_zone,here(here("data", "Starting", "ID_in_zone_inclussion.shp")))
+saveRDS(ID_in_zone,here(here("data", "Starting", "ID_in_zone_inclussion.rds")))
 
 saveRDS(
   BCN_adreces_users_SF_included,
@@ -279,45 +279,24 @@ saveRDS(
 
 BCN_adreces_users_SF_included_Data_tableSF <- BCN_adreces_users_SF %>%
   filter(included == "included") %>%
-  st_drop_geometry() %>%
-  select(-x,-y,-n_grupo,-idx,-offset,-x_vis,-y_vis)
+  st_drop_geometry()
 
 saveRDS(BCN_adreces_users_SF_included_Data_tableSF,here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
 
+### Selecció situació atdom sis mesos anteriors
 
-Situacio<-Situacio%>%
-  select("USUA_CIP","ATDOM","USUA_SITUACIO")%>%
-  filter(as.Date(ATDOM) <= as.Date("2024-06-16"))
-
-# Selecció situació atdom sis mesos anteriors
-
-  
-# Primera carga de datos raw inicial
-
-DF_work<-readRDS(here("data", "Starting", "DF_INICIAL_11_09_026.RDS"))
-
-### Solo de los que dispongo dirección y estan en zona y por fecha de inclusión 6 meses antes (evitar ATDOMs transitorios y final de vida precipitados)
-
-DF_work<-DF_work%>%
-  inner_join(ID_in_zone[,c(1)], by="ID")%>%
-   filter(as.Date(ATDOM) <= as.Date("2024-06-16"))
-  
 
 # Cargar el diccionario de metadatos desde csv
 metadata_dict <- read_csv2(here("data", "metadata_dict.csv")) |>
-  # eliminar filas con todo NA
-  filter(if_any(everything(), ~ !is.na(.)))
+
+# eliminar filas con todo NA
+filter(if_any(everything(), ~ !is.na(.)))
 
 # Preparar datos TB_pacientes
-
 TB_pac_inicial <- DF_work
 
 # Guardar dataset 
-
 saveRDS(TB_pacientes, here("data","Tables_DB","TB_pac_inicial.RDS"))
 
 # Flujo
-
 validate_input_data(TB_pacientes, metadata_dict) # valida y lanza warnings/errors
-
-

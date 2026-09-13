@@ -243,7 +243,6 @@ set_names_to_df <- function(df, dict) {
   return(df)
 }
 
-
 # descriptiva enfermedades ------------------------------------------------
 
 get_disease_summary <- function(data, start_var, end_var) {
@@ -265,7 +264,6 @@ get_disease_summary <- function(data, start_var, end_var) {
     ) |>
     arrange(desc(N))
 }
-
 
 # categorizacion 2 y 3 variables ------------------------------------------
 

@@ -2,15 +2,15 @@
 # 01_1_data_prep_Initial_descriptive.R
 # ============================================================
 
-source(here("scripts", "00_setup.R"))
+source(here("scripts", "00_0 setup.R"))
 
 # Carga de datos raw
 
-DF_Inicial<-readRDS(here("data","Starting", "DF_Descrip_inicial.rds"))
+DF_Inicial<-readRDS(here("data","Starting", "DF_INICIAL_11_09_026.rds"))
 
 patologias_interes  <- c(
   # Cardiovasculares
-  "HTA", "IC", "Card. Isquémica", "Valvulopatía", "Disrrítmias",
+  "HTA", "IC", "Card. Isquémica", "Disrrítmias",
   # Neurocognitivas
   "Demencia", "Parkinson", "AVC",
   # Metabólicas
@@ -28,24 +28,29 @@ patologias_interes  <- c(
 )
 
 DF_patologias <- DF_Inicial %>% 
-  select(USUA_CIP,all_of(patologias_interes))
+  select(ID,all_of(patologias_interes))
 
 DF_Inicial<-DF_Inicial%>%
-  select(c(1:41))%>%
+  select(c(1:39))%>%
   left_join(DF_patologias, 
-            by="USUA_CIP")
+            by="ID")
 
 ##Solo de los que dispongo dirección y estan en zona
 
-Adreces<-readRDS(here("data", "processed", "adreces_SF.rds"))
+inclussion<-readRDS(here("data", "Starting", "ID_in_zone_inclussion.rds"))
+
+DF_Inicial<-DF_Inicial%>%
+  filter(ID %in% inclussion$ID)
 
 # Cargar el diccionario de metadatos desde csv
 
 metadata_dict_inicial <- read_csv2(here("data", "metadata_dict_inicial.csv")) |>
-    # eliminar filas con todo NA
-  filter(if_any(everything(), ~ !is.na(.)))
 
-# Preparar datos TB_pacientes -----------------------------------------
+# eliminar filas con todo NA
+
+filter(if_any(everything(), ~ !is.na(.)))
+
+# Preparar datos TB_pacientes 
 
 # Flujo
 
