@@ -8,6 +8,25 @@ apply_barthel <- function(x) {
   )
 }
 
+# Transformador BRANDEN
+
+apply_braden <- function(x) {
+  cut(x,
+      breaks = c(-Inf, 13, 15, Inf),
+      labels = c(
+        "Very high (≤9 to 12)",
+        "Moderate (13-14)",
+        "None or Low (15 to 18)"),
+      right = FALSE
+  )
+}
+
+# Transformador GMA
+apply_GMA <- function(x) {
+  case_when(x<3|is.na(x)~"no",
+            TRUE~"si")}
+
+
 # Transformador TIRS
 apply_TIRS <- function(x) {
   case_when(x>0~"si",
@@ -122,8 +141,9 @@ apply_all_transformations <- function(df, dict) {
       "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")), # Específico sexo
       "date_diff"     = as.numeric((as.Date("2024-12-16") - val) / 365.25),
       "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
-      "GMA_groups"    = as.factor(val),
+      "GMA_groups"    = apply_GMA(val),
       "barthel"       = apply_barthel(val),
+      "Braden"        = apply_braden(val),
       "pfeiffer"      = apply_pfeiffer(val),
       "PCC"           = apply_PCC(val),
       "GMA_CODE"      = numeric(val),
@@ -145,9 +165,7 @@ apply_all_transformations <- function(df, dict) {
       "Time_follow_up_emergency_d"         = ifelse(is.na(val), 407, val), # Si Na, 407
       "Time_follow_up_hospital_admission"  = ifelse(is.na(val), 407, val), # Si Na, 407
       "PHC_name"      = apply_uab_mapping(val, "name"),
-      
-      df_trans[[row$target_var]] # Default: no tocar
-    )
+                )
   }
    
   # 2. Casos especiales multivariable (Incontinencia)
@@ -194,9 +212,13 @@ apply_all_transformations_inicial <- function(df, dict) {
                                          "factor_status" = factor(ifelse(val == "A", "Yes", "No")),
                                          "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")),
                                          "date_diff"     = as.numeric(difftime(as.Date("2024-12-16"), as.Date(val), units = "days") / 365.25),
+                                         "distancia_caminando_m" = as.numeric(val),
+                                         "tiempo_caminando_min"  = val,
+                                         "hms" = as_hms(round(val)), 
                                          "gma_strat"     = factor(ifelse(val %in% c(3, 4), "Yes", "No")),
-                                         "GMA_groups"    = as.factor(val),
+                                         "GMA_groups"    = apply_GMA(val),
                                          "barthel"       = apply_barthel(val),
+                                         "BRADEN.x"      = apply_braden(val),
                                          "pfeiffer"      = apply_pfeiffer(val),
                                          "PCC"           = apply_PCC(val),
                                          "GMA_CODE"      = as.numeric(val),

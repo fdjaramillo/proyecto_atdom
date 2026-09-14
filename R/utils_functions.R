@@ -2,7 +2,7 @@
 # Utils_functions.R
 
 # Función para calcular distancias y tiempos caminando entre un bloque de pacientes
-# y todos los centros disponibles mediante la API de matrices de OpenRouteService.
+#   y todos los centros disponibles mediante la API de matrices de OpenRouteService.
 
 # Argumentos:
 #   df_pacientes_bloque: data.frame con los pacientes del bloque actual.
@@ -18,98 +18,76 @@
 #   incluyendo distancia caminando en metros y tiempo caminando en minutos.
 #   Si la API falla tras todos los intentos, devuelve un data.frame vacío.
 
-
-procesar_bloque_matrix <- function(df_pacientes_bloque, max_intentos = 5) {
+procesar_bloque_matrix <- function(df_rutas_bloque, max_intentos = 3) {
   
-  # Combina en una única matriz las coordenadas de pacientes y centros.    
+  n_rutas <- nrow(df_rutas_bloque)
   
+  # Coordenadas: rutas (coords del paciente) + destinos (coords del centro)
   coordenadas <- rbind(
-    unname(as.matrix(df_pacientes_bloque[, c("lon_paciente", "lat_paciente")])),
-    unname(as.matrix(centros_unicos[, c("lon_centro", "lat_centro")]))
+    unname(as.matrix(df_rutas_bloque[, c("geo_epgs_4326_lon", "geo_epgs_4326_lat")])),
+    unname(as.matrix(df_rutas_bloque[, c("geo_epgs_centro_4326_lon", "geo_epgs_centro_4326_lat")]))
   )
   
-  n_pacientes_bloque <- nrow(df_pacientes_bloque)
-  
-  # Índices de origen: corresponden a las filas de pacientes dentro de la matriz
-  # de coordenadas. Se resta 1 porque la API usa indexación 0-based,
-  # mientras que R usa indexación 1-based. 
-  
-  idx_sources <- (1:n_pacientes_bloque) - 1
-  
-  # Índices de destino: corresponden a las filas de centros dentro de la misma
-  # matriz de coordenadas. Como los centros se añadieron después de los pacientes,
-  # sus posiciones empiezan justo después de n_pacientes_bloque.
-  # También se resta 1 para adaptar la indexación a la API.
-  
-  idx_destinations <- ((n_pacientes_bloque + 1):(n_pacientes_bloque + n_centros)) - 1
+  idx_sources      <- 0:(n_rutas - 1)
+  idx_destinations <- n_rutas:(2 * n_rutas - 1)
   
   intento <- 1
   res <- NULL
-  
-  # Bucle de reintentos. Se repite hasta obtener una respuesta válida
-  # o hasta alcanzar el número máximo de intentos.  
+  quota_agotada <- FALSE
   
   while (intento <= max_intentos) {
+    message("Intento ", intento, "/", max_intentos,
+            " para bloque de ", n_rutas, " rutas")
     
-    message(
-      "Intento ", intento, "/", max_intentos,
-      " para bloque de ", n_pacientes_bloque, " pacientes"
-    )
-    # Llamada a la API de matriz de OpenRouteService.
-    # tryCatch evita que un error puntual interrumpa todo el procesamiento.  
+    quota_local <- FALSE
+    
     res <- tryCatch(
       {
         ors_matrix(
-          locations = coordenadas,
-          sources = idx_sources,
+          locations    = coordenadas,
+          sources      = idx_sources,
           destinations = idx_destinations,
-          profile = "foot-walking",
-          metrics = c("duration", "distance"),
-          output = "parsed"
+          profile      = "foot-walking",
+          metrics      = c("duration", "distance"),
+          output       = "parsed"
         )
       },
       error = function(e) {
-        message("Error en intento ", intento, ": ", conditionMessage(e))
+        msg <- conditionMessage(e)
+        if (grepl("403|Quota exceeded", msg)) {
+          message("Quota agotada (403). Abortando reintentos.")
+          quota_local <<- TRUE
+          return(NULL)
+        }
+        message("Error en intento ", intento, ": ", msg)
         return(NULL)
       }
     )
     
-    # Si la respuesta existe y contiene distancias, se considera válida
-    # y se sale del bucle de reintentos.
+    if (quota_local) { quota_agotada <- TRUE; break }
+    if (!is.null(res) && !is.null(res$distances)) break
     
-    if (!is.null(res) && !is.null(res$distances)) {
-      break
-    }
-    
-    # Espera progresiva antes del siguiente intento.
-    # Por ejemplo: 5, 10, 15, 20... segundos.
-    # Esto reduce la probabilidad de nuevos bloqueos o errores temporales.
-    
-    Sys.sleep(5 * intento)  # espera progresiva: 5, 10, 15, 20...
+    Sys.sleep(5 * intento)
     intento <- intento + 1
   }
   
-  # Si después de todos los intentos no hay respuesta válida,
-  # se devuelve un data.frame vacío para que el proceso global pueda continuar.
-  
   if (is.null(res) || is.null(res$distances)) {
-    message("Bloque fallido tras ", max_intentos, " intentos")
-    return(data.frame())
+    if (quota_agotada) message("Bloque abortado: cuota agotada.")
+    else message("Bloque fallido tras ", max_intentos, " intentos.")
+    
+    return(tibble(
+      id_ruta               = df_rutas_bloque$id_ruta,
+      distancia_caminando_m = NA_real_,
+      tiempo_caminando_min  = NA_real_
+    ))
   }
   
-  # Construye todas las combinaciones paciente-centro del bloque
-  # y añade las distancias y tiempos devueltos por la API.
-  
-  expand.grid(
-    id_ruta = df_pacientes_bloque$id_ruta,
-    id_centro = centros_unicos$id_centro
-  ) %>%
-    mutate(
-      distancia_caminando_m = as.vector(res$distances),
-      tiempo_caminando_min = as.vector(res$durations) / 60
-    )
+  tibble(
+    id_ruta               = df_rutas_bloque$id_ruta,
+    distancia_caminando_m = diag(as.matrix(res$distances)),
+    tiempo_caminando_min  = diag(as.matrix(res$durations)) / 60
+  )
 }
-
 
 ##Normalizar carrer
 normaliza_carrer <- function(x) {

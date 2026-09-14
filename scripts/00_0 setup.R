@@ -1,5 +1,5 @@
 # ============================================================
-# 00_setup.R
+# 00_0setup.R
 # Project setup: packages, and paths
 
 # ---- Packages ----
@@ -34,6 +34,7 @@ library(stringr)
 library(stringi)
 library(data.table)
 library(xlsx)
+library(hms)
 
 
 # ---- General options ----

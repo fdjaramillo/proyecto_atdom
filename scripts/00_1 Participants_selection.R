@@ -5,10 +5,18 @@
 source(here("scripts", "00_0 setup.R"))
 
 # PARTICIPANTS SELECTION.
-# In zone
-# ============================================================
+# --> 1 Adreces de Barcelona 
+# --> 2 Codis de carrer 
+# --> 3 Normalització de carrers 
+# --> 4 Normalització de carrers pacients
+# --> 5 Join a adreces a pacients 
+# --> 6 Perímetre de les ABS dels centres participants.
+# --> 7 Selecció de pacients en zona 
+# --> 8 Generació de IDs! 
 
-# Download Adreces ajuntament de Barcelona SF object
+
+# --> 1 Adreces de Barcelona
+# ============================================================
 
 #Adreces<- "https://opendata-ajuntament.barcelona.cat/data/dataset/25752522-3528-4c14-b68d-5f09a3e393bd/resource/661fe190-67c8-423a-b8eb-8140f547fde2/download"
 
@@ -20,7 +28,7 @@ source(here("scripts", "00_0 setup.R"))
 
 BCN_adreces<- st_read("data/adreces.csv")
 
-# Download còdis de carrer de Barcelona
+# --> 2 Codis de carrer 
 
 #Codis_carrerer<- "https://opendata-ajuntament.barcelona.cat/data/dataset/d7802fd1-cdfb-4562-9148-d18722d7e2d8/resource/2b010e59-6952-4b27-9c4e-47fcaf64c916/download"
 
@@ -31,6 +39,9 @@ BCN_adreces<- st_read("data/adreces.csv")
 #)
 
 Codis_carrerer<- st_read("data/carrerer.csv")
+
+
+# --> 3 Normalització de carrers
 
 # Merge carrerer amb graf edificis pero obtenir codi de tipus de vial 
 # Elimina lletres i duplicats de númermo#########
@@ -62,7 +73,7 @@ BCN_adreces_codis<-BCN_adreces%>%
   ungroup() %>%
   distinct(tipus_via, nom_carrer, as.numeric(numpost_i), .keep_all = TRUE)
 
-### Borro UTS sense coordanades i alguns canvis inicials de majuscules
+### Borro UTS sense coordenades i alguns canvis inicials de majuscules
 
 # Limpieza inicial:
 # - eliminar registros sin coordenadas
@@ -113,7 +124,6 @@ BCN_adreces_codis <- BCN_adreces_codis %>%
     latitud_wgs84
   ) 
 
-
 # Checks no hay duplicados por calle y numero 
 
 BCN_adreces_codis %>%
@@ -123,6 +133,8 @@ BCN_adreces_codis %>%
 BCN_adreces_codis %>%
   count(longitud_wgs84, sort = TRUE) %>%
   filter(is.na(n))
+
+# --> 4 Normalització de carrers pacients
 
 ####### Carrers pacients #########
 
@@ -150,7 +162,7 @@ User_adreces <- User_adreces %>%
     )
   )
 
-######## Normalización denominación direcciones de HC a Carrers de Barcelona hacer igual que la denominación original. #######
+# Normalización denominación direcciones de HC a Carrers de Barcelona hacer igual que la denominación original. #######
 
 User_adreces <- User_adreces %>%
   mutate(
@@ -212,8 +224,7 @@ User_adreces <- User_adreces %>%
   )%>%
   select(-nom_carrer_norm)   
 
-# Join SF carrers de BCN amb adreces users. Identificació postals.
-# ==================================================================
+# --> 5 Join a adreces a pacients 
 
 BCN_adreces_users <- User_adreces %>%
   left_join(
@@ -231,7 +242,7 @@ BCN_adreces_users_SF <- st_as_sf(
 
 BCN_adreces_users_SF<-st_make_valid(BCN_adreces_users_SF)
 
-#Perímetre de les ABS dels centres participants.
+# --> 6 Perímetre de les ABS dels centres participants.
 
 ABS_sf<-st_read(
   here("data", "external", "cartografia_centres", "ABS.shp"),
@@ -243,7 +254,7 @@ ABS_sel <- ABS_sf %>%
 
 ABS_sel <- st_make_valid(ABS_sel)
 
-## Detección de los que no están en ZONA
+# --> 7 Selecció de pacients en zona 
 
 BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
   st_join(
@@ -257,10 +268,17 @@ BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
   distinct(ID, .keep_all = TRUE)
 
 BCN_adreces_users_SF_included <- BCN_adreces_users_SF %>%
-  filter(
-    included =="included")
+  filter(included =="included")
 
-## Saver IDs de pacients en zona
+BCN_adreces_users_SF_included %>%
+  as_tibble()%>%
+  select(-geometry)%>%
+  saveRDS(here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
+
+saveRDS(BCN_adreces_users_SF_included,here("data", "SF", "BCN_adreces_users_SF_included_SF.rds"))
+
+
+# --> 8 Generació de IDs! 
 
 ID_in_zone<-BCN_adreces_users_SF%>%
   select(ID,included)%>%
@@ -270,33 +288,7 @@ ID_in_zone<-BCN_adreces_users_SF%>%
 ID_in_zone<-ID_in_zone%>%
   filter(included=="included")
 
-saveRDS(ID_in_zone,here(here("data", "Starting", "ID_in_zone_inclussion.rds")))
-
-saveRDS(
-  BCN_adreces_users_SF_included,
-  here("data", "SF", "adreces_users_SF.rds")
-)
-
-BCN_adreces_users_SF_included_Data_tableSF <- BCN_adreces_users_SF %>%
-  filter(included == "included") %>%
-  st_drop_geometry()
-
-saveRDS(BCN_adreces_users_SF_included_Data_tableSF,here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
-
-### Selecció situació atdom sis mesos anteriors
+saveRDS(ID_in_zone,here("data", "Starting", "ID_in_zone_inclussion.rds"))
 
 
-# Cargar el diccionario de metadatos desde csv
-metadata_dict <- read_csv2(here("data", "metadata_dict.csv")) |>
 
-# eliminar filas con todo NA
-filter(if_any(everything(), ~ !is.na(.)))
-
-# Preparar datos TB_pacientes
-TB_pac_inicial <- DF_work
-
-# Guardar dataset 
-saveRDS(TB_pacientes, here("data","Tables_DB","TB_pac_inicial.RDS"))
-
-# Flujo
-validate_input_data(TB_pacientes, metadata_dict) # valida y lanza warnings/errors
