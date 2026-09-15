@@ -86,7 +86,6 @@ mutate(Centre_ID= case_when(USUA_UAB_UP=="Barcelona - 02C"~ "99400282464",
                             USUA_UAB_UP=="Barcelona - 05B"~ "92086002931",
                             USUA_UAB_UP=="Barcelona - 04C"~ "94354121938"))
 
-levels(TB_Descrip$Home_based_PHC_org)
 Center_location <- readRDS(here("data", "SF", "Centres_estudi_adreces_sf.rds"))%>%
     st_drop_geometry() %>%
     transmute(

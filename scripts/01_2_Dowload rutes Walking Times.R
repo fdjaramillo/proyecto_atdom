@@ -110,7 +110,6 @@ paciente_ruta_con_dist <- paciente_ruta %>%
          )%>%
   mutate(tiempo_caminando_hms=as_hms(round(tiempo_caminando_min * 60)))
 
-summary(paciente_ruta_con_dist$tiempo_caminando_hms)
 
 saveRDS(paciente_ruta_con_dist,here("data", "processed", "paciente_ruta_distancia.rds"))
 

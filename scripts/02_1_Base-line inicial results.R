@@ -88,8 +88,6 @@ Table_2_by_org_inicial <- descrTable(
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
-names(TB_Descrip)
-boxplot(TB_Descrip$Walking_distance~TB_Descrip$Home_based_PHC_org)
 export2md(Table_2_by_org_inicial, format = "html")
 
 export2html(

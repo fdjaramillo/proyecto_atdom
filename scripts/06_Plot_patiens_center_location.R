@@ -272,7 +272,7 @@ library("htmlwidgets")
 
 sep_metros <- 8 
 
-BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
+BCN_adreces_users_SF_map <- BCN_adreces_users_SF_included %>%
   mutate(
     x = st_coordinates(.)[, 1],
     y = st_coordinates(.)[, 2]
@@ -299,17 +299,13 @@ BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
 mapview(ABS_sel, col.regions = "lightblue", alpha.regions = 0.3, 
         legend = FALSE, layer.name = "ABS") +
   mapview(trams, color = "black", lwd = 2, legend = FALSE, layer.name = "Trams") +
-  mapview(BCN_adreces_users_SF, 
+  mapview(BCN_adreces_users_SF_map, 
           zcol = "included",
           col.regions = c("included" = "red", "no included" = "black"),
           cex = 4,
           label = BCN_adreces_users_SF$USUA_CIP,
           layer.name = "Usuarios")
 
-plot(st_geometry(ABS_sel),
-     col = adjustcolor("lightblue", alpha.f = 0.3),
-     border = "blue",
-     main = "Puntos incluidos en ABS")
 
 # 2. Luego las líneas
 plot(st_geometry(trams),

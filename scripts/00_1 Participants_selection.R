@@ -137,20 +137,17 @@ BCN_adreces_codis %>%
 # --> 4 Normalització de carrers pacients
 
 ####### Carrers pacients #########
-library(here)
-User_adreces <- read_excel(
-  here("data", "Starting", "ADRECES_FINAL_15_09_026.xlsx")
-)
 
-User_adreces<- readRDS(here("data", "Starting", "ADRECES_FINAL_15_09_026.rds"))
+User_adreces<-readRDS(here("data", "Starting", "ADRECES_FINAL_15_09_026.rds"))
 
 ##### Transformació tipus de vial ######
-names(User_adreces)
+# Normalización denominación direcciones de HC a Carrers de Barcelona hacer igual que la denominación original. #######
+
 User_adreces <- User_adreces %>%
   rename(tipus_via = USUA_TIPUS_DE_VIAL) %>%
   mutate(
-    nom_carrer = normaliza_carrer(nom_carrer),
-    numpost_i  = as.integer(numpost_i),
+    nom_carrer_norm = normaliza_carrer(nom_carrer),
+    numpost_i = as.integer(numpost_i),
     tipus_via  = case_when(
       tipus_via == "CR" ~ "C",
       tipus_via == "AV" ~ "Av",
@@ -167,13 +164,8 @@ User_adreces <- User_adreces %>%
     )
   )
 
-# Normalización denominación direcciones de HC a Carrers de Barcelona hacer igual que la denominación original. #######
-
 User_adreces <- User_adreces %>%
   mutate(
-    # Normalizar el nombre original
-    nom_carrer_norm = normaliza_carrer(nom_carrer),
-    
 # Aplicar equivalencias
     nom_carrer_join = case_when(
 # Quitar "DE" o artículos
@@ -273,7 +265,8 @@ BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
   distinct(ID, .keep_all = TRUE)
 
 BCN_adreces_users_SF_included <- BCN_adreces_users_SF %>%
-  filter(included =="included")
+  filter(included =="included")%>%
+  filter(RESIDENCIA_FORA_ZONA =="NO")
 
 BCN_adreces_users_SF_included %>%
   as_tibble()%>%
@@ -282,16 +275,12 @@ BCN_adreces_users_SF_included %>%
 
 saveRDS(BCN_adreces_users_SF_included,here("data", "SF", "BCN_adreces_users_SF_included_SF.rds"))
 
-
 # --> 8 Generació de IDs! 
 
-ID_in_zone<-BCN_adreces_users_SF%>%
-  select(ID,included)%>%
+ID_in_zone<-BCN_adreces_users_SF_included%>%
+  select(ID)%>%
   as_tibble()%>%
   select(-geometry)
-
-ID_in_zone<-ID_in_zone%>%
-  filter(included=="included")
 
 saveRDS(ID_in_zone,here("data", "Starting", "ID_in_zone_inclussion.rds"))
 
