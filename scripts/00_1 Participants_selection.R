@@ -137,28 +137,33 @@ BCN_adreces_codis %>%
 # --> 4 Normalització de carrers pacients
 
 ####### Carrers pacients #########
+library(here)
+User_adreces <- read_excel(
+  here("data", "Starting", "ADRECES_FINAL_15_09_026.xlsx")
+)
 
-User_adreces<- readRDS(here("data", "Starting", "ADRECES_FINAL_11_09_026.rds"))
+User_adreces<- readRDS(here("data", "Starting", "ADRECES_FINAL_15_09_026.rds"))
 
 ##### Transformació tipus de vial ######
-
+names(User_adreces)
 User_adreces <- User_adreces %>%
+  rename(tipus_via = USUA_TIPUS_DE_VIAL) %>%
   mutate(
     nom_carrer = normaliza_carrer(nom_carrer),
-    numpost_i = as.integer(numpost_i),
-    tipus_via = case_when(
-      USUA_TIPUS_DE_VIAL == "CR" ~ "C",
-      USUA_TIPUS_DE_VIAL == "AV" ~ "Av",
-      USUA_TIPUS_DE_VIAL == "TS" ~ "Trav",
-      USUA_TIPUS_DE_VIAL == "PL" ~ "Pl",
-      USUA_TIPUS_DE_VIAL == "RI" ~ "Rier",
-      USUA_TIPUS_DE_VIAL == "PG" ~ "Ptge",
-      USUA_TIPUS_DE_VIAL == "BX" ~ "Bda",
-      USUA_TIPUS_DE_VIAL == "PS" ~ "Pg",
-      USUA_TIPUS_DE_VIAL == "VI" ~ "Via",
-      USUA_TIPUS_DE_VIAL == "RD" ~ "Rda",
-      USUA_TIPUS_DE_VIAL == "GV" ~ "G.V.",
-      USUA_TIPUS_DE_VIAL == "RB" ~ "Rbla",
+    numpost_i  = as.integer(numpost_i),
+    tipus_via  = case_when(
+      tipus_via == "CR" ~ "C",
+      tipus_via == "AV" ~ "Av",
+      tipus_via == "TS" ~ "Trav",
+      tipus_via == "PL" ~ "Pl",
+      tipus_via == "RI" ~ "Rier",
+      tipus_via == "PG" ~ "Ptge",
+      tipus_via == "BX" ~ "Bda",
+      tipus_via == "PS" ~ "Pg",
+      tipus_via == "VI" ~ "Via",
+      tipus_via == "RD" ~ "Rda",
+      tipus_via == "GV" ~ "G.V.",
+      tipus_via == "RB" ~ "Rbla"
     )
   )
 
