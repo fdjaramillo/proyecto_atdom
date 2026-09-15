@@ -1,53 +1,19 @@
 # ============================================================
-# 02_1 Base-line inicial results.R
+# 02_0 PHC Characteristics.R
 # ============================================================
 
 source(here("scripts", "00_0 setup.R"))
 
 ############ Prep data_frame ###############
+
 # Data
-DF_Inicial <- readRDS(here("data","processed","DF_pacientes_inicial.RDS"))
 
-# Diccionario
-metadata_dict_inicial <- read_csv2(here("data", "metadata_dict_inicial.csv"))
+Central_res<- read.xlsx(here("data","external","DADES_CENTRAL_RESULTATS_2024.xlsx"),
+                        sheetName="Sheet1")
 
-# Transformación
-TB_Descrip <- apply_all_transformations_inicial(DF_Inicial, metadata_dict_inicial) # transformar
+Central_res<- Central_res %>%
+  mutate(UP_ABS = sprintf("%05d", UP_ABS))
 
-## Seleccción de patologías de interés
-
-patologias_interes  <- c(
-  # Cardiovasculares
-  "HTA", "IC", "Card. Isquémica", "Disrrítmias",
-  # Neurocognitivas
-  "Demencia", "Parkinson", "AVC",
-  # Metabólicas
-  "Diabetes", "Hiperlipidemia",
-  # Renales
-  "IRC",
-  # Respiratorias
-  "EPOC", "Insuf. Respiratoria",
-  # Músculo-esqueléticas
-  "Artrosis", "Fractura de fémur", "Osteoporosis",
-  # Psiquiátricas
-  "Depressión", "Ansiedad",
-  # Complementarias
-  "Anemia", "Infecciones urinarias", "Glaucoma"
-)
-
-DF_patologias <- DF_Inicial %>% 
-  select(ID,all_of(patologias_interes))
-
-DF_Inicial<-DF_Inicial%>%
-  select(c(1:39))%>%
-  left_join(DF_patologias, 
-            by="ID")
-
-# Labels
-
-TB_Descrip<- set_names_to_df(TB_Descrip, metadata_dict_inicial) # poner etiquetas
-
-saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
 
 ### Descriptives
 
@@ -88,8 +54,6 @@ Table_2_by_org_inicial <- descrTable(
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
-names(TB_Descrip)
-boxplot(TB_Descrip$Walking_distance~TB_Descrip$Home_based_PHC_org)
 export2md(Table_2_by_org_inicial, format = "html")
 
 export2html(

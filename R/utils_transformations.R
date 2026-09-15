@@ -88,7 +88,6 @@ apply_logic_cat <- function(x, target_name) {
   return(x)
 }
 
-
 # transformador UAB
 
 apply_uab_mapping <- function(x, output_type = "name") {
