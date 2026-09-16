@@ -249,6 +249,8 @@ ABS_sf<-st_read(
 ABS_sel <- ABS_sf %>%
   filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
 
+names(ABS_sel)
+
 ABS_sel <- st_make_valid(ABS_sel)
 
 saveRDS(ABS_sel,here("data", "SF", "ABS_sel_sf.sf"))
