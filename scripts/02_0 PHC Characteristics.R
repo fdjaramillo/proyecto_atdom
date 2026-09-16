@@ -431,7 +431,10 @@ Table1 <- Table1 %>%
     
     Population_85plus_pct =
       100 * Assigned_population_85plus /
-      Assigned_population_Total
+      Assigned_population_Total,
+    
+    Standardized_mortality_rate_85plus=
+      Standardized_mortality_rate_85plus/1000
   )
 
 
