@@ -22,10 +22,10 @@ Visits_outcomes<-Visits%>%
 
 Total_costs<-Visits_outcomes[,c(1,10:14)]%>%
   left_join(Farm,by="ID")%>%
-  left_join(analitiques[,c(1,3)],by="ID")%>%
+  left_join(Analitiques,by="ID")%>%
   left_join(Der[,c(1,9:14)],by="ID")%>%
   mutate(TOTAL = rowSums(
     across(c(2:6, 9, 16)),
     na.rm = TRUE
   ))
-
+names(Total_costs)
