@@ -11,7 +11,7 @@ trams <- st_read(
   here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
   quiet = TRUE)
 
-Patients_locations_sf<-readRDS(here("data", "processed", "adreces_SF.rds"))
+BCN_adreces_users_SF_included<-readRDS(here("data", "SF", "BCN_adreces_users_SF_included_SF.rds"))
 
 centros_sf<-readRDS(here("data", "external", "Centres_estudi_adreces_sf.rds"))
 
@@ -249,11 +249,8 @@ ggplotly(plot_map2, tooltip = "text")
 
 #### Alternativa plot pacients mapa interactivo
 
-
-
 nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
                  quiet = TRUE)
-
 
 trams <- st_read(
   here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
@@ -263,6 +260,10 @@ trams_sel <- trams %>%
   filter(Distric_E %in% c("05","02","04"))
 
 nodes_sel <- nodes[st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any), ]
+
+
+ABS_sel<-st_read(here("data", "SF", "ABS_sel_sf.sf"))
+ABS_sel <- st_make_valid(ABS_sel)
 
 # 1. Primero los polígonos (fondo), con transparencia
 
@@ -303,7 +304,7 @@ mapview(ABS_sel, col.regions = "lightblue", alpha.regions = 0.3,
           zcol = "included",
           col.regions = c("included" = "red", "no included" = "black"),
           cex = 4,
-          label = BCN_adreces_users_SF$USUA_CIP,
+          label = BCN_adreces_users_SF_included$ID,
           layer.name = "Usuarios")
 
 

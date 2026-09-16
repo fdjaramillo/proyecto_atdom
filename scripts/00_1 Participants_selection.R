@@ -251,6 +251,8 @@ ABS_sel <- ABS_sf %>%
 
 ABS_sel <- st_make_valid(ABS_sel)
 
+saveRDS(ABS_sel,here("data", "SF", "ABS_sel_sf.sf"))
+
 # --> 7 Selecció de pacients en zona 
 
 BCN_adreces_users_SF <- BCN_adreces_users_SF %>%
