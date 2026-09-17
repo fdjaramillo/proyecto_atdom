@@ -3,7 +3,7 @@
 # ============================================================
 
 
-source(here("scripts", "00_setup.R"))
+source(here("scripts", "00_0 setup.R"))
 
 # 0. Parameters
 
@@ -12,188 +12,66 @@ districts_sel <- c("05", "02", "04")
 
 density_palette <- c(
   "white", "#fee0d2", "#fcbba1", "#fc9272",
-  "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d"
+  "#fb6a4a", "#ef3b2c", "#cb181d", "#99000d","#4d0000"
 )
 
 # 1. Load spatial data
 
-nodes <- st_read(
-  here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
-  quiet = TRUE
-)
+ABS_sel<-readRDS(here("data", "SF", "ABS_sel_SF.rds"))
+
+nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
+                 quiet = TRUE)
 
 trams <- st_read(
   here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Trams_ETRS89_SHP.shp"),
-  quiet = TRUE
-)
+  quiet = TRUE)
 
-U_cens <- st_read(
-  here("data", "external", "BCN_UNITATS_ADM", "0301040100_SecCens_UNITATS_ADM.shp"),
-  quiet = TRUE
-)
-
-ABS_sf<-st_read(
-  here("data", "external", "cartografia_centres", "ABS.shp"),
-  quiet = TRUE
-)
+U_cens <- readRDS(
+  here("data", "SF", "unitats_censals_estudi_sf.rds"))
 
 centros_sf <- readRDS(
-  here("data", "external", "Centres_estudi_adreces_sf.rds")
+  here("data", "SF", "Centres_estudi_SF.rds")
 )
 
-patients_locations_sf <- readRDS(
-  here("data", "processed", "adreces_SF.rds")
-)
+tasas_cobertura_atdom<-readRDS(here("data","processed","Age_standarized_ATDOM_U_CENSAL.rds"))
 
 # 2. Prepare street network and centres
 
 trams_sel <- trams %>%
   filter(Distric_E %in% districts_sel)
 
-nodes_sel <- nodes[
-  st_intersects(nodes, trams_sel, sparse = FALSE) |> apply(1, any),]
+nodes_sel <- nodes[lengths(st_intersects(nodes, trams_sel)) > 0, ]
 
-centros_sf <- centros_sf %>%
-  st_transform(st_crs(trams_sel))
+# Prepare census unit polygons
 
-ABS_sel <- ABS_sf %>%
-  filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
+U_cens_sel <- U_cens 
 
-
-# 3. Load and prepare census population
-
-Pob_u_censal <- read_csv(
-  here("data", "external", "2024_pad_mdbas_sexe.csv"),
-  show_col_types = FALSE
+unitats_censals_plot <- st_intersection(
+  U_cens_sel,
+  st_union(ABS_sel)
 )
-
-Pob_u_censal_age <- read_csv(
-  here("data", "external", "2024_pad_mdbas_edat.csv"),
-  show_col_types = FALSE
-)
-
-# Changes in u_censal
-
-Pob_u_censal_sel <- Pob_u_censal %>%
-  mutate(
-    SEXE = case_when(
-      SEXE == 1 ~ "homes",
-      SEXE == 2 ~ "dones",
-      TRUE ~ NA_character_
-    ),
-    Codi_Barri_txt = str_pad(as.character(Codi_Barri), width = 2, pad = "0"),
-    Seccio_Censal = as.character(Seccio_Censal)
-  ) %>%
-  filter(
-    Codi_Barri_txt %in% barrios_sel,
-    !is.na(SEXE)
-  ) %>%
-  pivot_wider(
-    names_from = SEXE,
-    values_from = Valor
-  ) %>%
-  mutate(
-    homes = coalesce(homes, 0),
-    dones = coalesce(dones, 0),
-    Total_pob = as.numeric(homes + dones)
-  )
-
-Pob_u_censal_age_sel <- Pob_u_censal_age %>%
-  mutate(
-    Codi_Barri_txt = str_pad(as.character(Codi_Barri), width = 2, pad = "0"),
-    Seccio_Censal = as.character(Seccio_Censal),
-    Valor = as.numeric(replace(Valor, Valor == "..", "0")),
-    EDAT_1 = as.numeric(EDAT_1)
-  ) %>%
-  filter(
-    Codi_Barri_txt %in% barrios_sel & EDAT_1>=18
-  ) %>%
-  group_by(Codi_Districte,Nom_Districte,Nom_Barri,AEB,Seccio_Censal,Codi_Barri_txt) %>%
-  summarise(
-    above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
-    above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
-    Total_pob = sum(Valor, na.rm = TRUE),
-    .groups = "drop"
-  )
-
-# 4. Aggregate patients by census section
-
-Patients_censal <- patients_locations_sf%>%
-  st_drop_geometry() %>%
-  mutate(
-    Seccio_Censal = paste0(
-      as.integer(districte),
-      str_pad(as.character(secc_cens), width = 3, pad = "0")
-    ),
-    Seccio_Censal = as.character(as.integer(Seccio_Censal))
-  ) %>%
-  filter(!is.na(Seccio_Censal)) %>%
-  group_by(Seccio_Censal) %>%
-  summarise(
-    Patients = n_distinct(ID),
-    .groups = "drop"
-  )
-
-# Join population and patients
-
-Patients_adreces_cens <- Pob_u_censal_age_sel %>%
-  mutate(
-    Seccio_Censal = as.character(as.integer(Seccio_Censal))
-  ) %>%
-  left_join(
-    Patients_censal,
-    by = "Seccio_Censal"
-  ) %>%
-  mutate(
-    Patients = coalesce(Patients, 0L),
-    Densitat_total = round(Patients / Total_pob * 1000, 2),
-    Densitat_total = round(Patients / above65y * 1000, 2),
-    Densitat_total = round(Patients / above75y * 1000, 2)
-  )
-####calcualr pacientes por unidad censal y edad.. me quedo aqui
-#above65y = sum(Valor[EDAT_1 >= 65], na.rm = TRUE),
-#above75y = sum(Valor[EDAT_1 >= 75], na.rm = TRUE),
-
-
-# 6. Prepare census polygons
-
-U_cens_sel <- U_cens %>%
-  st_transform(st_crs(trams)) %>%
-  mutate(
-    BARRI_txt = str_pad(as.character(BARRI), width = 2, pad = "0"),
-    Seccio_Censal = paste0(
-      as.integer(DISTRICTE),
-      str_pad(as.character(SEC_CENS), width = 3, pad = "0")
-    ),
-    Seccio_Censal = as.character(as.integer(Seccio_Censal))
-  ) %>%
-  filter(BARRI_txt %in% barrios_sel)
 
 # 7. Create map dataset
-names(Patients_adreces_cens)
-map_censal <- U_cens_sel %>%
+
+
+map_censal <- unitats_censals_plot %>%
   left_join(
-    Patients_adreces_cens %>%
-      select(
-        Seccio_Censal,
-        Codi_Districte,
-        Nom_Districte,
-        Nom_Barri,
-        Total_pob,
-        Patients,
-        Densitat_total
-      ),
+    tasas_cobertura_atdom,
     by = "Seccio_Censal"
   ) %>%
-  mutate(
-    Patients = coalesce(Patients, 0L),
-    Densitat = coalesce(Densitat_total, 0)
+  select(
+    Seccio_Censal,
+    nom_districte,
+    nom_barri,
+    CODABSa,
+    NOMABS,
+    tasa_atdom_std_1000
   )
 
 # 8. Crop street network and define map limits
 
 map_visible <- map_censal %>%
-  filter(!is.na(Densitat) & Densitat > 0)
+  filter(!is.na(tasa_atdom_std_1000) & tasa_atdom_std_1000 > 0)
 
 # 1. Definir bbox solo del área que quieres mostrar
 bb <- st_bbox(map_visible)
@@ -230,54 +108,57 @@ ylim_map <- c(
 )
 
 # 9. Quality checks
-
-map_censal_plot %>%
-  st_drop_geometry() %>%
-  summarise(
-    n_sections = n(),
-    n_sections_with_population = sum(!is.na(Total_pob)),
-    n_sections_with_patients = sum(Patients > 0, na.rm = TRUE),
-    total_patients = sum(Patients, na.rm = TRUE),
-    max_density = max(Densitat, na.rm = TRUE)
-  )
+names(map_censal_plot)
 
 # 10. Plot census-section density map
 st_bbox(map_censal)
 st_bbox(map_censal_plot)
 
-
 plot_censal <- ggplot() +
   geom_sf(
     data = map_censal_plot,
-    aes(fill = Densitat),
+    aes(fill = tasa_atdom_std_1000),
     color = "white",
     linewidth = 0.08
   ) +
   geom_sf(
     data = trams_plot ,
-    color = "black",
-    linewidth = 0.12,
-    alpha = 0.8
-  ) +
-  geom_sf(
-    data = ABS_sel,
-    color = "black",
-    linewidth = 1,
-    fill = NA
+    color = "grey30",
+    linewidth = 0.10,
+    alpha = 0.7
   ) +
   geom_sf(
     data = centros_plot,
-    shape = 22,
-    size = 3.4,
-    fill = "grey90",
+    shape = 21,
+    size = 1.8,
+    fill = "white",
     color = "black",
-    stroke = 0.8
+    stroke = 0.5
   ) +
+  geom_sf(
+    data = ABS_sel,
+    aes(color = NOMABS),
+    linewidth = 1.1,
+    fill = NA,
+    show.legend = FALSE
+  ) +
+  scale_color_manual(
+    values = c(
+      "#0057B8",
+      "#00875A",
+      "#7B2CBF",
+      "#00A6D6",
+      "#5A189A",
+      "#008C95",
+      "#3A3A3A"
+    )
+  )+
   scale_fill_gradientn(
     colours = density_palette,
-    name = "Patients/1,000 inhabitants",
-    limits = c(0, 25),
-    breaks = seq(0, 25, by = 5),
+    name = "Age-standardized rate per 1,000 inhabitants",
+    limits = c(0, 32),
+    breaks = seq(0, 32, by = 4),
+    oob = squish,
     na.value = "grey95"
   ) +
   coord_sf(
@@ -287,10 +168,10 @@ plot_censal <- ggplot() +
     clip = "on"
   ) +
   guides(
+    color = "none",
     fill = guide_colorbar(
       title.position = "top",
       title.hjust = 0.5,
-      title.vjust = 0.5,
       barwidth = unit(8, "cm"),
       barheight = unit(0.4, "cm")
     )
@@ -306,23 +187,96 @@ plot_censal <- ggplot() +
     legend.direction = "horizontal",
     legend.title = element_text(size = 9,color = "black"),
     legend.text = element_text(size = 9),
-    legend.box.margin = margin(t = 0.5, r = 0, b = 0, l = 0),
-    legend.margin = margin(t = 0.5, r = 0, b = 0, l = 0),
-    legend.box.spacing = unit(0, "pt"),
+    legend.box.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    legend.margin = margin(t = 1, r = 0, b = 0, l = 0),
+    legend.box.spacing = unit(2, "pt"),
+    plot.caption = element_text(size = 8,color = "black",hjust = 0, face="italic"),
     
     plot.title = element_text(size = 13, face = "bold"),
     plot.subtitle = element_text(size = 10, color = "grey30"),
     plot.margin = margin(t = 5, r = 5, b = 2, l = 5)
   ) +
   labs(
-    title = "Density of patients receiving primary home-based care by census section",
-    subtitle = "Patients per 1,000 inhabitants by census unit",
+    title = "Age-standardized ATDOM enrolment rate by census section",
+    subtitle = "Spatial distribution across primary care catchment areas",
+    caption = "Colored boundaries indicate the limits of the seven primary health care areas.",
     x = NULL,
     y = NULL
   )
 
 plot_censal
 
+map_censal %>%
+  st_drop_geometry() %>%
+  filter(tasa_atdom_std_1000 >= 28) %>%
+  select(
+    Seccio_Censal,
+    NOMABS,
+    tasa_atdom_std_1000
+  ) %>%
+  arrange(desc(tasa_atdom_std_1000))
+
+tasas_cobertura_atdom_long<-readRDS(here("data","processed","Age_categorized_long_ATDOM_U_CENSAL"))
+names(tasas_cobertura_atdom_long)
+
+print(n=34,Pob_u_censal_age %>%
+  filter(
+    Seccio_Censal == "4049",
+    EDAT_1 >= 85
+  ) %>%
+  arrange(EDAT_1) %>%
+  select(
+    Seccio_Censal,
+    EDAT_1,
+    Valor
+  ))
+
+tasas_cobertura_atdom_long %>%
+  filter(Seccio_Censal == "4049") %>%
+  left_join(
+    pesos_edad,
+    by = "edat_cat"
+  ) %>%
+  mutate(
+    contribucion = tasa_atdom_1000 * peso_edad
+  ) %>%
+  select(
+    edat_cat,
+    poblacion_total,
+    n_atdom,
+    tasa_atdom_1000,
+    peso_edad,
+    contribucion
+  )
+
+sapply(
+  list(
+    map_censal_plot = map_censal_plot,
+    trams_plot = trams_plot,
+    ABS_sf = ABS_sf,
+    centros_plot = centros_plot
+  ),
+  function(x) st_crs(x)$epsg
+)
+
+objetos <- list(
+  map_censal_plot = map_censal_plot,
+  trams_plot       = trams_plot,
+  ABS_sf           = ABS_sf,
+  centros_plot     = centros_plot
+)
+
+names(map_censal_plot)
+
+# Ver CRS completo
+map_censal_plot %>%
+  st_drop_geometry() %>%
+  select(
+    nom_districte,
+    NOMABS,
+    Seccio_Censal
+  ) %>%
+  head(20)
 
 # 11. Save figure
 

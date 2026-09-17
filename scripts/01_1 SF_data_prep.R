@@ -17,13 +17,13 @@ download.file(
     destfile = "data/external/centres.csv",
     mode = "wb")
 
-#Load  
+#1. CARGA DE LAS COORDENADAS DE LOS CENTROS 
 Centres_adreces <- read.csv(
     "data/external/centres.csv",
     fileEncoding = "UTF-16LE"
   )
 
-#Transform into SF
+# 2. CONVERSIÓN A OBJETO ESPACIAL SF
 Centres_adreces_sf <- st_as_sf(
     Centres_adreces,
     coords = c("geo_epgs_25831_x", "geo_epgs_25831_y"),
@@ -31,7 +31,7 @@ Centres_adreces_sf <- st_as_sf(
     remove = FALSE
   )
 
-#Select centres estudi  
+# 3. SELECCIÓN DE LOS CENTROS INCLUIDOS EN EL ESTUDIO 
 Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
     filter(name %in% c("Centre d'Atenció Primària Comte Borrell",
                        "Centre d'Atenció Primària Ernest Lluch",
@@ -39,27 +39,105 @@ Centres_estudi_adreces_sf <- Centres_adreces_sf%>%
                        "Centre d'Atenció Primària Montnegre",
                        "Centre d'Atenció Primària Adrià")
                       )
-#Recode Lluch
+# 4. CORRECCIÓN DE LA LOCALIZACIÓN DEL CAP ERNEST LLUCH
 Lluch_exacto <- st_sfc(st_point(c(2.1249939903309873, 41.383859217910526)), crs = 4326)
 Lluch_exacto_utm <- st_transform(Lluch_exacto, crs = 25831)
-nuevas_coords <- st_coordinates(Lluch_exacto_utm)
+
+# 5. IDENTIFICACIÓN DEL CENTRO ERNEST LLUCH
+idx_lluch <- which(
+  Centres_estudi_adreces_sf$name ==
+    "Centre d'Atenció Primària Ernest Lluch"
+)
+
+# 6. ACTUALIZACIÓN DE LA GEOMETRÍA
+
+st_geometry(Centres_estudi_adreces_sf)[idx_lluch] <-
+  Lluch_exacto_utm
+
+# 7. ACTUALIZACIÓN DE LAS COLUMNAS NUMÉRICAS DE COORDENADAS
   
-# Crear el nuevo punto en UTM
-nuevo_punto <- st_transform(Lluch_exacto, crs = 25831)
-Centres_estudi_adreces_sf[2, ] <- st_set_geometry(Centres_estudi_adreces_sf[2, ], nuevo_punto)
-  
-# Actualizar coordenadas
-  coords <- st_coordinates(nuevo_punto)
-  Centres_estudi_adreces_sf[2, "geo_epgs_25831_x"] <- coords[1, "X"]
-  Centres_estudi_adreces_sf[2, "geo_epgs_25831_y"] <- coords[1, "Y"]
-  Centres_estudi_adreces_sf[2, "geo_epgs_4326_lat"] <- 41.383859217910526
-  Centres_estudi_adreces_sf[2, "geo_epgs_4326_lon"] <- 2.1249939903309873
+coords_lluch <- st_coordinates(Lluch_exacto_utm)
+
+Centres_estudi_adreces_sf$geo_epgs_25831_x[idx_lluch] <-
+  coords_lluch[1, "X"]
+
+Centres_estudi_adreces_sf$geo_epgs_25831_y[idx_lluch] <-
+  coords_lluch[1, "Y"]
+
+Centres_estudi_adreces_sf$geo_epgs_4326_lat[idx_lluch] <-
+  41.383859217910526
+
+Centres_estudi_adreces_sf$geo_epgs_4326_lon[idx_lluch] <-
+  2.1249939903309873
+
   
 saveRDS(
-    Centres_estudi_adreces_sf,
-    here("data", "SF", "Centres_estudi_adreces_sf.rds"))
-  
-#Pacients a centre amb dades SF per a routes.
+  Centres_estudi_adreces_sf,
+    here("data", "SF", "Centres_estudi_SF.rds"))
+
+##Unitats censals inclonses
+
+#URL  
+Unitats_censals<- "https://opendata-ajuntament.barcelona.cat/data/dataset/808daafa-d9ce-48c0-925a-fa5afdb1ed41/resource/e16856a7-b3c0-4c32-a468-cc190cbbf7a9/download"
+
+#Download  
+download.file(
+  url = Unitats_censals,
+  destfile = "data/external/unitats_censals.csv",
+  mode = "wb")
+
+#Carrega
+
+unitats_censals<- read_csv("data/external/unitats_censals.csv")%>%
+  select(-geometria_wgs84)%>%
+  mutate(
+    Seccio_Censal = paste0(
+      as.integer(codi_districte),
+      str_pad(codi_seccio_censal, width = 3, pad = "0")
+    ),
+    Seccio_Censal = as.character(as.integer(Seccio_Censal))
+  )
+
+# CONVERSIÓN A OBJETO ESPACIAL SF
+unitats_censals_sf <- unitats_censals %>%
+  st_as_sf(
+    wkt = "geometria_etrs89",
+    crs = 25831
+  )
+
+ABS_sf<-readRDS(here("data", "SF", "ABS_sel_SF.rds")
+)
+
+
+# Selección: cualquier UC que intersecte algún ABS
+unitats_censals_estudi_sf <- unitats_censals_sf[
+  lengths(st_intersects(unitats_censals_sf, ABS_sf)) > 0,
+]
+
+# Asignación del ABS: usando punto interior
+uc_points <- st_point_on_surface(unitats_censals_estudi_sf)
+
+uc_abs <- st_join(
+  uc_points,
+  ABS_sf %>%
+    select(CODABSa, NOMABS),
+  join = st_within,
+  left = TRUE
+)
+
+unitats_censals_estudi_sf <- unitats_censals_estudi_sf %>%
+  left_join(
+    uc_abs %>%
+      st_drop_geometry() %>%
+      select(Seccio_Censal, CODABSa, NOMABS),
+    by = "Seccio_Censal"
+  )
+
+saveRDS(
+  unitats_censals_estudi_sf,
+  here("data", "SF", "unitats_censals_estudi_sf.rds"))
+
+### Pacients a centre amb dades SF per a routes. ###
 
 Patients_locations<-readRDS(here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
 
@@ -86,7 +164,7 @@ mutate(Centre_ID= case_when(USUA_UAB_UP=="Barcelona - 02C"~ "99400282464",
                             USUA_UAB_UP=="Barcelona - 05B"~ "92086002931",
                             USUA_UAB_UP=="Barcelona - 04C"~ "94354121938"))
 
-Center_location <- readRDS(here("data", "SF", "Centres_estudi_adreces_sf.rds"))%>%
+Center_location <- readRDS(here("data", "SF", "Centres_estudi_SF.rds"))%>%
     st_drop_geometry() %>%
     transmute(
       Centre_ID = register_id,

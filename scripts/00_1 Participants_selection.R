@@ -3,7 +3,7 @@
 # ============================================================
 
 source(here("scripts", "00_0 setup.R"))
-
+.rds
 # PARTICIPANTS SELECTION.
 # --> 1 Adreces de Barcelona 
 # --> 2 Codis de carrer 
@@ -249,11 +249,9 @@ ABS_sf<-st_read(
 ABS_sel <- ABS_sf %>%
   filter(NOMABS %in% c("Barcelona - 04A","Barcelona - 04B","Barcelona - 04C","Barcelona - 05B","Barcelona - 05A","Barcelona - 02C","Barcelona - 02E"))
 
-names(ABS_sel)
-
 ABS_sel <- st_make_valid(ABS_sel)
 
-saveRDS(ABS_sel,here("data", "SF", "ABS_sel_sf.sf"))
+saveRDS(ABS_sel,here("data", "SF", "ABS_sel_SF.rds"))
 
 # --> 7 Selecció de pacients en zona 
 
@@ -272,12 +270,17 @@ BCN_adreces_users_SF_included <- BCN_adreces_users_SF %>%
   filter(included =="included")%>%
   filter(RESIDENCIA_FORA_ZONA =="NO")
 
+
+# 1. Write the spatial file
+saveRDS(
+  BCN_adreces_users_SF_included,
+  here("data", "SF", "BCN_adreces_users_SF_included_SF.RDS"))
+
+# 2. Write the attribute table (no geometry) as RDS
 BCN_adreces_users_SF_included %>%
-  as_tibble()%>%
-  select(-geometry)%>%
+  st_drop_geometry() %>%        # cleaner than as_tibble() + select(-geometry)
   saveRDS(here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
 
-saveRDS(BCN_adreces_users_SF_included,here("data", "SF", "BCN_adreces_users_SF_included_SF.rds"))
 
 # --> 8 Generació de IDs! 
 
