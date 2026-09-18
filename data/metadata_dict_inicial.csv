@@ -1,6 +1,6 @@
 ﻿n;orig_var;target_var;label;type;critical
 1;ID;ID;Patient ID;id;TRUE
-3;USUA_SEXE;sex_female;Sex (female);factor_sex;FALSE
+3;SEXE;sex_female;Sex (female);factor_sex;FALSE
 4;EDAT;Edat;Age (years);numeric;FALSE
 5;ATDOM;years_home_based;Years in home-based program;date_diff;FALSE
 7;distancia_caminando_m;Walking_distance;Distance from center (meters);numeric;FALSE

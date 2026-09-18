@@ -4,7 +4,7 @@
 
 source(here("scripts", "00_0 setup.R"))
 
-Patients_centre_locations<-readRDS(here("data", "SF", "pacients_adreces_i_centre_sf_Data_Table.rds"))
+Patients_centre_locations<-readRDS(here("data", "SF", "pacients_i_centre_sf_Data_Table.rds"))
 
 ors_api_key("eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImM2YjdlNGExN2M1Y2Q0NzBmNDg5MTZlZmYxYzFkYzUwYjdhZjllYTI2MDVlMTc4NzNmNTQ1MDAyIiwiaCI6Im11cm11cjY0In0=")
 
