@@ -6,7 +6,6 @@ source(here("scripts", "00_0 setup.R"))
 
 
 #Data dowload
-
 #URLGeneralitat de Catalunya 
 
 Sexe_edat_quinquenal_2024<- "https://www.idescat.cat/pub/?id=censph&n=539&by=sec&t=2024&f=zip&fi=ssv&lang=es"
@@ -153,6 +152,15 @@ pob_denominadores <- pob_estratificada_u_censal %>%
     poblacion_total
   )
 
+saveRDS(
+  pob_denominadores,
+  here(
+    "data",
+    "processed",
+    "pob_denominadores.rds"
+  )
+)
+
 # ------------------------------------------------------------
 # 2. NUMERADORES:
 # PACIENTES ATDOM POR UNIDAD CENSAL, GRUPO DE EDAD Y SEXO
@@ -217,6 +225,14 @@ atdom_numeradores <- patients_locations_sf %>%
     name = "n_atdom"
   )
 
+saveRDS(
+  atdom_numeradores,
+  here(
+    "data",
+    "processed",
+    "atdom_numeradoresL.rds"
+  )
+)
 # ------------------------------------------------------------
 # 3. CÁLCULO DE TASAS ESPECÍFICAS DE ATDOM POR 1.000 HABITANTES
 #    SEGÚN GRUPO DE EDAD Y SEXO
@@ -279,7 +295,7 @@ saveRDS(
   here(
     "data",
     "processed",
-    "Age_sex_categorized_long_ATDOM_U_CENSAL.rds"
+    "tasas_cobertura_atdom_long.rds"
   )
 )
 
@@ -331,7 +347,7 @@ saveRDS(
   here(
     "data",
     "processed",
-    "Age_sex_categorized_wide_ATDOM_U_CENSAL.rds"
+    "tasas_cobertura_atdom_wide.rds"
   )
 )
 
@@ -360,6 +376,15 @@ pesos_edad_sexo <- pob_denominadores %>%
     peso_edad_sexo = poblacion_estandar /
       sum(poblacion_estandar)
   )
+
+saveRDS(
+  atdom_numeradores,
+  here(
+    "data",
+    "processed",
+    "pesos_edad_sexo.rds"
+  )
+)
 
 
 # ------------------------------------------------------------
@@ -409,6 +434,6 @@ saveRDS(
   here(
     "data",
     "processed",
-    "Age_sex_standardized_ATDOM_U_CENSAL.rds"
+    "tasas_atdom_estandarizadas.rds"
   )
 )
