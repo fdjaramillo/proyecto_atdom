@@ -19,8 +19,6 @@ library(epiR) #Incidence
 library(broom)
 library(nnet)
 library(patchwork)
-library(purrr)
-library(stringr)
 library(ggplot2)
 library(labelled)
 library(WeightIt)
@@ -35,6 +33,12 @@ library(stringi)
 library(data.table)
 library(openxlsx)
 library(hms)
+library(emmeans)
+library(sandwich)
+library(lmtest)
+library(FactoMineR)
+library(factoextra)
+library(missMDA)
 
 
 # ---- General options ----

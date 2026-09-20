@@ -1,14 +1,62 @@
-# Carga explícita de dependencias
-library(tidyverse)
-library(compareGroups)
+# ============================================================
+# 03_0 Cluster to case_mix selection analysis.R
+# ============================================================
 
-if (!file.exists("data/processed/df_cleaned.rds")) {
-  stop("El archivo df_cleaned.rds no existe. Ejecuta primero scripts/01_data_prep.R")
-}
-df <- readRDS("data/processed/df_cleaned.rds")
-load("data/DF_work2.RData") # Necesario para obtener DF_work_2 de forma independiente
+source(here("scripts", "00_0 setup.R"))
 
-# Definición de variables del estado global necesarias para la ejecución
+#Load Data
+
+df<-readRDS(here("data","processed","DF_pacientes_inicial.RDS"))
+
+#1. DATASET PARA FAMDón de variables del clustering
+
+vars_famd <- c(
+  # Demografía
+  "EDAT",
+  "SEXE",
+  
+  # Función / fragilidad
+  "BARTHEL",
+  "FRAGIL_VIG",
+  
+  # Nutrición
+  "MNA",
+  
+  # Situación social
+  "GIJON",
+  "VIU_SOL",
+  
+  # Neurológicas
+  "Demencia",
+  "Parkinson",
+  "AVC",
+  
+  # Cardiovasculares
+  "IC",
+  "Card. Isquémica",
+  
+  # Respiratorias
+  "EPOC",
+  "Insuf. Respiratoria",
+  
+  # Metabólicas / renales
+  "Diabetes",
+  "IRC",
+  
+  # Oncológicas
+  "Neo activa",
+  "Metástasis",
+  
+  # Salud mental
+  "Depressión",
+  
+  # Accesibilidad
+  "distancia_caminando_m"
+)
+
+
+
+
 method <- c(
   DOMICILI_INF_TOT = 2,
   TOTAL_VISITS_INF = 2,
@@ -47,10 +95,6 @@ df_cluster <-df%>%
 
   mutate(USUA_NIVELL_COBERTURA=as.factor(USUA_NIVELL_COBERTURA))
 
-
-library(FactoMineR)
-library(factoextra)
-library(missMDA)
 
 # imputación
 
@@ -135,7 +179,3 @@ SEM_num
 INGRES_num
 Exitus
 
-summary(glm(INGRES_num ~ organit_atdom_2 +cluster+  Edat + sexo + MACA.y + 
-              coc_conj + TOTAL_VISITS_CONJF,
-    data = df_cluster,
-    family = gaussian))

@@ -63,9 +63,6 @@ Data_model_UC <- Data_model_UC %>%
 
 #Poisson con errores robustos (las U-censales dependen del centro).
 
-library(sandwich)
-library(lmtest)
-
 # M0: organización
 m0 <- glm(
   n_atdom ~ Home_based_PHC_org +
@@ -104,8 +101,6 @@ res_m1 <- get_robust_results(m1, Data_model_UC)
 res_m2 <- get_robust_results(m2, Data_model_UC)
 
 ##Tasas ajustadas por 1000hab
-
-library(emmeans)
 
 V_m2 <- vcovCL(
   m2,
