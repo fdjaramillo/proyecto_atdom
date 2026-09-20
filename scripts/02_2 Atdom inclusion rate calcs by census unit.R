@@ -230,7 +230,7 @@ saveRDS(
   here(
     "data",
     "processed",
-    "atdom_numeradoresL.rds"
+    "atdom_numeradores.rds"
   )
 )
 # ------------------------------------------------------------
@@ -378,7 +378,7 @@ pesos_edad_sexo <- pob_denominadores %>%
   )
 
 saveRDS(
-  atdom_numeradores,
+  pesos_edad_sexo,
   here(
     "data",
     "processed",

@@ -88,3 +88,49 @@ run_models_automatic <- function(data, continuous_outcomes, categorical_outcomes
       model_formula
     )
 }
+
+#Robust standard errors.
+
+get_robust_results <- function(model, data){
+  
+  V <- vcovCL(
+    model,
+    cluster = data$Seccio_Censal,
+    type = "HC1"
+  )
+  
+  se <- sqrt(diag(V))
+  beta <- coef(model)
+  z <- beta / se
+  
+  tibble(
+    term = names(beta),
+    beta = round(beta,3),
+    std.error = round(se,3),
+    IRR = round(exp(beta),2),
+    conf.low = round(exp(beta - 1.96 * se),2),
+    conf.high = round(exp(beta + 1.96 * se),2),
+    statistic = round(z,3),
+    p.value = round(2 * pnorm(abs(z), lower.tail = FALSE),4)
+  )
+}
+
+# Función para preparar solo los efectos de organización
+prep_model <- function(res, model_name) {
+  
+  res %>%
+    filter(grepl("^Home_based_PHC_org", term)) %>%
+    mutate(
+      Home_based_PHC_org = case_when(
+        grepl("Equip_Atdom", term) ~ "Equip ATDOM",
+        grepl("Equip_Inf", term) ~ "Equip Inf",
+        grepl("UAB_consulta_reforc", term) ~ "UAB consulta reforç"
+      ),
+      estimate = sprintf(
+        "%.2f (%.2f–%.2f)",
+        IRR, conf.low, conf.high
+      ),
+      Model = model_name
+    ) %>%
+    select(Home_based_PHC_org, Model, estimate)
+}

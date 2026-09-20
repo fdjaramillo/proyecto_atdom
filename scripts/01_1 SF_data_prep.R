@@ -70,10 +70,17 @@ Centres_estudi_adreces_sf$geo_epgs_4326_lat[idx_lluch] <-
 Centres_estudi_adreces_sf$geo_epgs_4326_lon[idx_lluch] <-
   2.1249939903309873
 
-  
-saveRDS(
-  Centres_estudi_adreces_sf,
-    here("data", "SF", "Centres_estudi_SF.rds"))
+Centres_estudi_adreces_sf <- Centres_estudi_adreces_sf %>%
+  mutate(Home_based_PHC_org = case_when(
+    register_id == "﻿94354121938" ~ "Equip_Atdom",
+    register_id == "﻿99499400282464" ~ "Equip_Atdom",
+    register_id == "﻿93056132443" ~ "UAB_consulta",
+    register_id == "﻿92086002684" ~ "Equip_Inf",
+    register_id == "﻿02931" ~ "UAB_consulta_reforc",
+    TRUE ~ NA_character_
+  ))
+
+saveRDS(Centres_estudi_adreces_sf, here("data", "SF", "Centres_estudi_SF.rds"))
 
 ##Unitats censals inclonses
 
@@ -108,33 +115,33 @@ unitats_censals_sf <- unitats_censals %>%
 ABS_sf<-readRDS(here("data", "SF", "ABS_sel_SF.rds")
 )
 
-
 # Selección: cualquier UC que intersecte algún ABS
+
 unitats_censals_estudi_sf <- unitats_censals_sf[
   lengths(st_intersects(unitats_censals_sf, ABS_sf)) > 0,
 ]
 
+
 # Asignación del ABS: usando punto interior
 uc_points <- st_point_on_surface(unitats_censals_estudi_sf)
 
-uc_abs <- st_join(
-  uc_points,
-  ABS_sf %>%
-    select(CODABSa, NOMABS),
+uc_abs <- st_join(uc_points,
+  ABS_sf %>% select(CODABSa, NOMABS),
   join = st_within,
   left = TRUE
 )
 
-unitats_censals_estudi_sf <- unitats_censals_estudi_sf %>%
-  left_join(
-    uc_abs %>%
-      st_drop_geometry() %>%
-      select(Seccio_Censal, CODABSa, NOMABS),
-    by = "Seccio_Censal"
+uc_abs <- uc_abs %>%
+  mutate(Home_based_PHC_org = case_when(
+    NOMABS %in% c("Barcelona - 02C", "Barcelona - 04C") ~ "Equip_Atdom",
+    NOMABS %in% c("Barcelona - 04A", "Barcelona - 04B") ~ "UAB_consulta",
+    NOMABS == "Barcelona - 02E" ~ "Equip_Inf",
+    NOMABS %in% c("Barcelona - 05A", "Barcelona - 05B") ~ "UAB_consulta_reforc",
+    TRUE ~ NA_character_
   )
+)
 
-saveRDS(
-  unitats_censals_estudi_sf,
+saveRDS(uc_abs,
   here("data", "SF", "unitats_censals_estudi_sf.rds"))
 
 ### Pacients a centre amb dades SF per a routes. ###
@@ -190,11 +197,11 @@ Center_location <- Center_location %>%
 
 pacients_adreces_i_centre <- Patients_locations%>%
   left_join(Center_location[,c(1,11:14)],
-            by = "Centre_ID")
+            by = "Centre_ID")%>%
+  rename(Seccio_Censal=secc_censal)
 
 saveRDS(
   pacients_adreces_i_centre,
   here("data", "SF", "pacients_i_centre_sf_Data_Table.rds"))
-
 
 
