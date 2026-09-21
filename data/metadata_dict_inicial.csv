@@ -43,4 +43,8 @@
 55;Ansiedad;anxiety;Anxiety;disease;FALSE
 56;Anemia;anemia;Anemia;disease;FALSE
 57;Infecciones urinarias;uti;Urinary tract infection;disease;FALSE
-59;Glaucoma;glaucoma;Glaucoma;disease;FALSE
+58;Glaucoma;glaucoma;Glaucoma;disease;FALSE
+59;IC;Chronic_heart_failure;Chronic_heart_failure;disease;FALSE
+60;Neo activa;Cancer;Cancer;disease;FALSE
+61;Metástasis;Metastasic_cancer;Metástasis;disease;FALSE
+62;Enfermedad hepática;Liver_disease;Liver_disease;disease;FALSE

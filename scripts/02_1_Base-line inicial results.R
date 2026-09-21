@@ -6,13 +6,13 @@ source(here("scripts", "00_0 setup.R"))
 
 ############ Prep data_frame ###############
 # Data
-DF_Inicial <- readRDS(here("data","processed","DF_pacientes_inicial.RDS"))
 
-# Diccionario
+DF_Inicial <- readRDS(here("data","processed","DF_pacientes_inicial.RDS"))
 metadata_dict_inicial <- read_csv2(here("data", "metadata_dict_inicial.csv"))
 
-# Transformación
-TB_Descrip <- apply_all_transformations_inicial(DF_Inicial, metadata_dict_inicial) # transformar
+# Diccionario
+
+ # transformar
 
 ## Seleccción de patologías de interés
 
@@ -45,7 +45,8 @@ DF_Inicial<-DF_Inicial%>%
 
 # Labels
 
-TB_Descrip<- set_names_to_df(TB_Descrip, metadata_dict_inicial) # poner etiquetas
+DF_Inicial<-apply_all_transformations_inicial(DF_Inicial, metadata_dict_inicial)
+TB_Descrip<- set_names_to_df(DF_Inicial, metadata_dict_inicial) # poner etiquetas
 
 saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
 

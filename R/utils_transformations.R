@@ -54,9 +54,11 @@ apply_pfeiffer <- function(x) {
 
 # Transformador disease
 apply_disease <- function(x) {
-  case_when(x==0~"no",
-            x!=0~"si",
-            TRUE~"no")
+  as.factor(case_when(
+    is.na(x) ~ "no",  # Conserva el vacío
+    x == 0   ~ "no",
+    TRUE     ~ "si"            # Todo lo que no sea 0 ni NA será "si"
+  ))
 }
 
 # Transformador Incontinencia

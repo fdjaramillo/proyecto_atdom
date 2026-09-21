@@ -3,7 +3,7 @@
 # ============================================================
 
 source(here("scripts", "00_0 setup.R"))
-.rds
+
 # PARTICIPANTS SELECTION.
 # --> 1 Adreces de Barcelona 
 # --> 2 Codis de carrer 
@@ -290,6 +290,4 @@ ID_in_zone<-BCN_adreces_users_SF_included%>%
   select(-geometry)
 
 saveRDS(ID_in_zone,here("data", "Starting", "ID_in_zone_inclussion.rds"))
-
-
 

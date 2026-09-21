@@ -12,9 +12,10 @@ DF_Inicial<-readRDS(here("data","Starting", "DF_INICIAL_11_09_026.rds"))%>%
   inner_join(
     readRDS(here("data", "Starting", "ID_in_zone_inclussion.rds")),
     by = "ID"
-  )
-
-names(DF_Inicial)
+  )%>%
+filter(!is.na(ATDOM))%>%
+  mutate(UP_ABS=case_when(UP_ABS=="00479"~"00477",
+                          TRUE~UP_ABS))
 
 # Guardar dataset 
 

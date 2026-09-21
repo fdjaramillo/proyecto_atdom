@@ -29,8 +29,8 @@ Data_SES_UC <- readRDS(
 pesos_edad_sexo<-readRDS(here("data","processed","pesos_edad_sexo.rds"))
 
 #Merging
-names(Data_SES_UC)
-Data_model_UC <- Data_population_UC[,c(7:10)]%>%
+
+Data_model_UC <- Data_population_UC[,c(7:11)]%>%
   left_join(Data_SES_UC, by = "Seccio_Censal") %>%
   left_join(atdom_numeradores, by = "Seccio_Censal")%>%
   left_join(pob_denominadores[,c(1:4,6)], by = c("Seccio_Censal","edat_cat", "sexo"))%>%
@@ -92,7 +92,6 @@ m2 <- glm(
   data = Data_model_UC
 )
 
-names(Data_model_UC)
 
 ##Resultados
 
@@ -116,8 +115,6 @@ emm_rates_robust <- emmeans(
   vcov. = V_m2
 )
 
-emm_rates_robust
-
 rates_adj_robust <- as.data.frame(emm_rates_robust) %>%
   mutate(
     across(where(is.numeric), ~ round(.x, 2)))%>%
@@ -125,9 +122,6 @@ rates_adj_robust <- as.data.frame(emm_rates_robust) %>%
       rename(CI_Lower=asymp.LCL,
              CI_Upper=asymp.UCL,
              access_rate_1000hab=rate)
-
-
-names(rates_adj_robust)
 
 #análisis de sensibilidad por centro:
 
@@ -185,7 +179,5 @@ Table_access <- tab_models %>%
     tab_rates,
     by = "Home_based_PHC_org"
   )
-
-Table_access
 
 write.xlsx(Table_access,here("Output","Tables","Access_model.xlsx"))

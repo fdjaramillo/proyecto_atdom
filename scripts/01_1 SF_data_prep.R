@@ -139,14 +139,22 @@ uc_abs <- uc_abs %>%
     NOMABS %in% c("Barcelona - 05A", "Barcelona - 05B") ~ "UAB_consulta_reforc",
     TRUE ~ NA_character_
   )
-)
+)%>%
+  st_drop_geometry()
 
-saveRDS(uc_abs,
+#Merge with included
+
+unitats_censals_estudi_sf<-unitats_censals_estudi_sf%>%
+  inner_join(uc_abs[,c(5,7,8,9,10)],
+             by="Seccio_Censal")
+
+saveRDS(unitats_censals_estudi_sf,
   here("data", "SF", "unitats_censals_estudi_sf.rds"))
 
 ### Pacients a centre amb dades SF per a routes. ###
 
-Patients_locations<-readRDS(here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))
+Patients_locations<-readRDS(here("data", "SF", "BCN_adreces_users_SF_included_Data_table.rds"))%>%
+  filter(!ID %in% c(483, 1312, 1919, 2241))
 
 Patients_locations <- Patients_locations %>%
     transmute(
@@ -198,7 +206,9 @@ Center_location <- Center_location %>%
 pacients_adreces_i_centre <- Patients_locations%>%
   left_join(Center_location[,c(1,11:14)],
             by = "Centre_ID")%>%
-  rename(Seccio_Censal=secc_censal)
+  rename(Seccio_Censal=secc_censal)%>%
+  filter(!ID %in% c(483, 1312, 1919, 2241)) ###no se dispone de datos ATDOM desde el DF_pacientes_inicial.RDS
+
 
 saveRDS(
   pacients_adreces_i_centre,

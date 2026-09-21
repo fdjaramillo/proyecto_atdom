@@ -2,7 +2,6 @@
 # 060.1_Plot_patients_center_location_and_census_place.R
 # ============================================================
 
-
 source(here("scripts", "00_0 setup.R"))
 
 # 0. Parameters
@@ -28,9 +27,8 @@ centros_sf <- readRDS(
   here("data", "SF", "Centres_estudi_SF.rds")
 )
 
-tasas_cobertura_atdom<-readRDS(here("data","processed","Age_sex_standardized_ATDOM_U_CENSAL.rds"))
+tasas_cobertura_atdom<-readRDS(here("data","processed","tasas_atdom_estandarizadas.rds"))
 
-head(tasas_cobertura_atdom)
 
 # 2. Prepare street network and centres
 
@@ -50,7 +48,6 @@ unitats_censals_plot <- st_intersection(
 
 # 7. Create map dataset
 
-
 map_censal <- unitats_censals_plot %>%
   left_join(
     tasas_cobertura_atdom,
@@ -64,6 +61,7 @@ map_censal <- unitats_censals_plot %>%
     NOMABS,
     tasa_atdom_std_1000
   )
+
 
 # 8. PREPARAR OBJETOS ESPACIALES Y DEFINIR EXTENSIÓN DEL MAPA
 
@@ -290,6 +288,7 @@ plot_censal <- ggplot() +
 
 # Mostrar mapa
 plot_censal
+
 
 # 11. Save figure
 

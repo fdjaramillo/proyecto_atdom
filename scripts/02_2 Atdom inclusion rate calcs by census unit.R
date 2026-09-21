@@ -185,7 +185,7 @@ saveRDS(
 atdom_numeradores <- patients_locations_sf %>%
   st_drop_geometry() %>%
   
-  left_join(
+  inner_join(
     Pacients_DATA %>%
       mutate(ID = as.integer(ID)),
     by = "ID"
