@@ -133,23 +133,43 @@ uc_abs <- st_join(uc_points,
 
 uc_abs <- uc_abs %>%
   mutate(Home_based_PHC_org = case_when(
-    NOMABS %in% c("Barcelona - 02C", "Barcelona - 04C") ~ "Equip_Atdom",
-    NOMABS %in% c("Barcelona - 04A", "Barcelona - 04B") ~ "UAB_consulta",
-    NOMABS == "Barcelona - 02E" ~ "Equip_Inf",
-    NOMABS %in% c("Barcelona - 05A", "Barcelona - 05B") ~ "UAB_consulta_reforc",
-    TRUE ~ NA_character_
-  )
-)%>%
+        NOMABS %in% c("Barcelona - 02C", "Barcelona - 04C") ~ "Equip_Atdom",
+        NOMABS %in% c("Barcelona - 04A", "Barcelona - 04B") ~ "UAB_consulta",
+        NOMABS == "Barcelona - 02E" ~ "Equip_Inf",
+        NOMABS %in% c("Barcelona - 05A", "Barcelona - 05B") ~ "UAB_consulta_reforc",
+        TRUE ~ NA_character_))
   st_drop_geometry()
 
 #Merge with included
 
 unitats_censals_estudi_sf<-unitats_censals_estudi_sf%>%
   inner_join(uc_abs[,c(5,7,8,9,10)],
-             by="Seccio_Censal")
+             by="Seccio_Censal")%>%
+  mutate(UP_ABS = case_when(
+    NOMABS == "Barcelona - 02C" ~ "00460",
+    NOMABS == "Barcelona - 04C" ~ "01004", 
+    NOMABS == "Barcelona - 04A" ~ "00474",
+    NOMABS == "Barcelona - 04B" ~ "00475", 
+    NOMABS == "Barcelona - 02E" ~ "00462",
+    NOMABS == "Barcelona - 05A" ~ "00477",
+    NOMABS == "Barcelona - 05B" ~ "00478",
+    TRUE ~ NA_character_
+  ))
+  
+saveRDS(
+    object = unitats_censals_estudi_sf,
+    file = here("data", "SF", "unitats_censals_estudi_sf.rds")
+  )
 
-saveRDS(unitats_censals_estudi_sf,
-  here("data", "SF", "unitats_censals_estudi_sf.rds"))
+#Data_frame unitats censals dels pacients
+unitats_cens_sel <- st_intersection(
+  unitats_censals_estudi_sf,
+  st_union(ABS_sel)
+)%>%
+  filter(!is.na(CODABSa))%>%
+  select(Seccio_Censal,CODABSa,NOMABS,Home_based_PHC_org,geometria_etrs89)
+
+saveRDS(unitats_cens_sel,here("data", "SF", "Unitats_cens_ABS_SF.rds"))
 
 ### Pacients a centre amb dades SF per a routes. ###
 
