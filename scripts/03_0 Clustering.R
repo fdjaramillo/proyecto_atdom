@@ -898,7 +898,6 @@ export2md(
 saveRDS(df_cluster_desc,here("data","processed","Cluster_id"))
 
 #Heat map
-library(pheatmap)
 summary(df_cluster_desc)
 
 domain_vars <- c(

@@ -11,9 +11,6 @@ library(glue)            # SQL strings with variables
 library(janitor)         # clean_names(), tabyl()
 library(readxl)          # read Excel files
 library(writexl)         # export Excel files
-library(FactoMineR)      # Cluster
-library(factoextra)      # Cluster
-library(pheatmap)        # Heatmap
 library(compareGroups)   #Results
 library(epiR) #Incidence
 library(broom)
@@ -39,6 +36,8 @@ library(lmtest)
 library(FactoMineR)
 library(factoextra)
 library(missMDA)
+library(pheatmap)
+
 
 
 # ---- General options ----
