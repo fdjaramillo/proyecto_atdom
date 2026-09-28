@@ -102,4 +102,21 @@ normaliza_carrer <- function(x) {
     str_replace_all("'", " ") %>%
     str_squish()
 }
+
+
+# ============================================================
+# Fowlkes-Mallows index for cluster stability
+
+
+fowlkes_mallows <- function(cluster_original, cluster_resampled) {
   
+  tab <- table(cluster_original, cluster_resampled)
+  
+  TP <- sum(choose(tab, 2))
+  TP_FP <- sum(choose(rowSums(tab), 2))
+  TP_FN <- sum(choose(colSums(tab), 2))
+  
+  FM <- TP / sqrt(TP_FP * TP_FN)
+  
+  as.numeric(FM)
+}

@@ -1,23 +1,21 @@
 # ============================================================
 # 03_2 Analysis case_mix selection.R
 # ============================================================
-library(here)
+
 source(here("scripts", "00_0 setup.R"))
 
-df<-readRDS(here("data","processed","Cluster_id"))
+df<-readRDS(here("data","cluster","df_cluster_desc"))
 
-case_mix_raw <- df %>%
+#Descriptius ray i proporcio
+
+case_prop <- df %>%
   count(Home_based_PHC_org, cluster) %>%
   group_by(Home_based_PHC_org) %>%
   mutate(
     total = sum(n),
     pct = 100 * n / total
   ) %>%
-  ungroup()
-
-case_mix_raw
-
-case_mix_table <- case_mix_raw %>%
+  ungroup() %>%
   mutate(
     value = sprintf("%d (%.1f%%)", n, pct)
   ) %>%
@@ -28,8 +26,85 @@ case_mix_table <- case_mix_raw %>%
     names_prefix = "Cluster_"
   )
 
-case_mix_table
+case_prop
 
+df <- df %>%
+  mutate(
+    cluster = relevel(cluster, ref = "Lower complexity"))
+
+# Multinomial crudo
+m0 <- multinom(
+  cluster ~ Home_based_PHC_org,
+  data = df
+)
+
+summary(m0)
+# Multinomial ajustado principal
+
+m1 <- multinom(
+  cluster ~ Home_based_PHC_org + Edat + sex_female,
+  data = df
+)
+
+# Test global de organización
+
+m1_null <- multinom(
+  cluster ~ Edat + sex_female,
+  data = df
+)
+
+anova(m1_null, m1, test = "Chisq")
+
+library(emmeans)
+
+emm_m1 <- emmeans(
+  m1,
+  ~ Home_based_PHC_org | cluster,
+  mode = "prob"
+)
+
+emm_m1
+
+as.data.frame(emm_m1)
+
+contrasts_m1 <- pairs(
+  emm_m1,
+  adjust = "holm"
+)
+
+contrasts_m1
+
+emm_m0 <- emmeans(
+  m0,
+  ~ Home_based_PHC_org | cluster,
+  mode = "prob"
+)
+
+emm_m1 <- emmeans(
+  m1,
+  ~ Home_based_PHC_org | cluster,
+  mode = "prob"
+)
+
+as.data.frame(emm_m0)
+as.data.frame(emm_m1)
+
+df %>%
+  count(Seccio_Censal) %>%
+  summarise(
+    n_UC = n(),
+    min = min(n),
+    q1 = quantile(n, .25),
+    median = median(n),
+    mean = mean(n),
+    q3 = quantile(n, .75),
+    max = max(n)
+  )
+
+# 6. Probabilidades marginales ajustadas
+# 7. Contrastes entre organizaciones + Holm
+# 8. Figura de probabilidades ajustadas con 95% CI
+# 9. Sensibilidad teniendo en cuenta ABS
 
 #2. Contraste global: ¿el case-mix difiere según organización?
 
@@ -62,9 +137,11 @@ df_case_mix <- df %>%
     sex_female = factor(sex_female)
   )
 
+
+
 df_case_mix <- df_case_mix %>%
   mutate(
-    cluster = relevel(cluster, ref = "1")
+    cluster = relevel(cluster, ref = "Lower complexity")
   )
 
 df_case_mix <- df_case_mix %>%

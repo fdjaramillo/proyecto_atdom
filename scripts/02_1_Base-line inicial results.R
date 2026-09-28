@@ -10,42 +10,12 @@ source(here("scripts", "00_0 setup.R"))
 DF_Inicial <- readRDS(here("data","processed","DF_pacientes_inicial.RDS"))
 metadata_dict_inicial <- read_csv2(here("data", "metadata_dict_inicial.csv"))
 
-# Diccionario
-
- # transformar
-
-## Seleccción de patologías de interés
-
-patologias_interes  <- c(
-  # Cardiovasculares
-  "HTA", "IC", "Card. Isquémica", "Disrrítmias",
-  # Neurocognitivas
-  "Demencia", "Parkinson", "AVC",
-  # Metabólicas
-  "Diabetes", "Hiperlipidemia",
-  # Renales
-  "IRC",
-  # Respiratorias
-  "EPOC", "Insuf. Respiratoria",
-  # Músculo-esqueléticas
-  "Artrosis", "Fractura de fémur", "Osteoporosis",
-  # Psiquiátricas
-  "Depressión", "Ansiedad",
-  # Complementarias
-  "Anemia", "Infecciones urinarias", "Glaucoma"
-)
-
-DF_patologias <- DF_Inicial %>% 
-  select(ID,all_of(patologias_interes))
-
-DF_Inicial<-DF_Inicial%>%
-  select(c(1:39))%>%
-  left_join(DF_patologias, 
-            by="ID")
-
 # Labels
 
 DF_Inicial<-apply_all_transformations_inicial(DF_Inicial, metadata_dict_inicial)
+
+saveRDS(DF_Inicial,here("data","processed","DF_pacientes_inicial_transformed.RDS"))
+
 TB_Descrip<- set_names_to_df(DF_Inicial, metadata_dict_inicial) # poner etiquetas
 
 saveRDS(TB_Descrip, here("data","Final","TB_Descrip.RDS"))
@@ -79,6 +49,7 @@ export2xls(
 )
 
 # Descriptiva Equip_Atdom, Equip_Inf, UAB_consulta y UAB_consulta_reforç
+
 Table_2_by_org_inicial <- descrTable(
   Home_based_PHC_org ~ . - ID,
   data = TB_Descrip,
@@ -89,6 +60,7 @@ Table_2_by_org_inicial <- descrTable(
   include.miss = T,
   extra.labels = c("", "", "", "")
 )
+
 export2md(Table_2_by_org_inicial, format = "html")
 
 export2html(

@@ -21,4 +21,3 @@ filter(!is.na(ATDOM))%>%
 
 saveRDS(DF_Inicial, here("data","processed","DF_pacientes_inicial.RDS"))
 
-

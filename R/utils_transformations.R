@@ -8,7 +8,37 @@ apply_barthel <- function(x) {
   )
 }
 
-# Transformador BRANDEN
+# Transformador artritis, artrosis
+
+apply_artrosis_artritis<-function(x, Artritis) {
+  factor(case_when(
+    x == "1" | Artritis == "1" ~ "si",
+    x == "0" & Artritis == "0" ~ "no",
+    TRUE ~ "no"
+  ))
+}
+
+# Transformador anxiety_depression
+
+apply_anxiety_depression<-function(x, Ansiedad) {
+  factor(case_when(
+    x == "1" | Ansiedad == "1" ~ "si",
+    x == "0" & Ansiedad == "0" ~ "no",
+    TRUE ~ "no"
+  ))
+}
+
+#Trans Cancer
+
+apply_cancer<-function(x, Metástasis)  {
+  factor(case_when(
+    x == "1" | Metástasis == "1" ~ "si",
+    x == "0" & Metástasis == "0" ~ "no",
+    TRUE ~ "no"
+  ))
+}
+
+# Transformador Braden
 
 apply_braden <- function(x) {
   cut(x,
@@ -156,7 +186,7 @@ apply_all_transformations <- function(df, dict) {
       "percentage"    = val * 100,
       "PHC_name"      = apply_uab_mapping(val, "name"),
       "Single_PHC"             = apply_uab_mapping(val, "org1"),
-      "Home_based_PHC_org"    = apply_uab_mapping(val, "org2"),
+      "Home_based_PHC_org"     = apply_uab_mapping(val, "org2"),
       "Home_Ambulances"        = ifelse(is.na(val), 0, val), # Si Na, 0
       "ED_visits"              = ifelse(is.na(val), 0, val), # Si Na, 0
       "PC_Emergency_unit"      = ifelse(is.na(val), 0, val), # Si Na, 0
@@ -212,7 +242,7 @@ apply_all_transformations_inicial <- function(df, dict) {
                                          "numeric"       = as.numeric(val),
                                          "factor_status" = factor(ifelse(val == "A", "Yes", "No")),
                                          "factor_sex"    = factor(ifelse(val == "D", "Yes", "No")),
-                                         "date_diff"     = as.numeric(difftime(as.Date("2024-12-16"), as.Date(val), units = "days") / 365.25),
+                                         "date_diff"     = as.numeric(difftime(as.Date("2024-12-30"), as.Date(val), units = "days") / 365.25),
                                          "distancia_caminando_m" = as.numeric(val),
                                          "tiempo_caminando_min"  = val,
                                          "hms" = as_hms(round(val)), 
@@ -233,17 +263,48 @@ apply_all_transformations_inicial <- function(df, dict) {
                                          "Single_PHC"    = apply_uab_mapping(val, "org1"),
                                          "Home_based_PHC_org" = apply_uab_mapping(val, "org2"),
                                          "id"            = as.character(val),
-                                         "disease"       = apply_disease(val),
-                                         df_trans[[row$target_var]]
+                                         "disease"       = apply_disease(val),      
+                                         
+                                         "anxiety_depression"       = NULL,
+                                         "Arthritis_osteoarthritis" = NULL,
+                                         "Cancer"                   = NULL,
+                                         
+                                         NA_character_
     )
   }
   
-  # Incontinencia
+  # ── Transformaciones que requieren DOS variables ────────────────────────
+  
+  # Artrosis + Artritis → artrosis_artritis
+  if (all(c("Artrosis", "Artritis") %in% colnames(df))) {
+    df_trans$Artrosis_Artritis <- apply_artrosis_artritis(
+      df[["Artrosis"]],
+      df[["Artritis"]]
+    )
+  }
+  
+  # Depresión + Ansiedad → anxiety_depression
+  if (all(c("Depressión", "Ansiedad") %in% colnames(df))) {
+    df_trans$anxiety_depression <- apply_anxiety_depression(
+      df[["Depressión"]],
+      df[["Ansiedad"]]
+    )
+  }
+  
+  # Neo activa + Metástasis → Cancer
+  if (all(c("Neo activa", "Metástasis") %in% colnames(df))) {
+    df_trans$Cancer <- apply_cancer(
+      df[["Neo activa"]],
+      df[["Metástasis"]]
+    )
+  }
+  
+# Incontinencia
   if ("incontinence" %in% dict$type) {
     df_trans$incontinence_cat <- apply_incontinence(df)
   }
   
-  # Seleccionar solo variables target
+# Seleccionar solo variables target
   final_vars <- unique(dict$target_var)
   df_trans <- df_trans |> select(any_of(final_vars))
   
@@ -291,7 +352,7 @@ get_disease_summary <- function(data, start_var, end_var) {
 # categorizacion 2 y 3 variables ------------------------------------------
 
 cat3 <- function(x) factor(
-  dplyr::case_when(
+  case_when(
     is.na(x) ~ "0",
     x == 0   ~ "0",
     x == 1   ~ "1",
@@ -301,7 +362,7 @@ cat3 <- function(x) factor(
 )
 
 cat2 <- function(x) factor(
-  dplyr::case_when(
+  case_when(
     is.na(x) ~ "0",
     x == 0   ~ "0",
     x >= 1   ~ "1+"

@@ -36,15 +36,12 @@
 46;IRC;ckd;Chronic Kidney Disease;disease;FALSE
 47;EPOC;copd;COPD;disease;FALSE
 48;Insuf. Respiratoria;respiratory_failure;Respiratory failure;disease;FALSE
-49;Artrosis;osteoarthritis;Osteoarthritis;disease;FALSE
+49;Artrosis;Arthritis_osteoarthritis;Arthritis or osteoarthritis;disease;FALSE
 51;Fractura de fémur;hip_fracture;Hip fracture;disease;FALSE
 52;Osteoporosis;osteoporosis;Osteoporosis;disease;FALSE
-53;Depressión;depression;Depression;disease;FALSE
-55;Ansiedad;anxiety;Anxiety;disease;FALSE
+53;Depressión;anxiety_depression;Anxiety or depression;anxiety_depression;FALSE
 56;Anemia;anemia;Anemia;disease;FALSE
 57;Infecciones urinarias;uti;Urinary tract infection;disease;FALSE
 58;Glaucoma;glaucoma;Glaucoma;disease;FALSE
-59;IC;Chronic_heart_failure;Chronic_heart_failure;disease;FALSE
-60;Neo activa;Cancer;Cancer;disease;FALSE
-61;Metástasis;Metastasic_cancer;Metástasis;disease;FALSE
-62;Enfermedad hepática;Liver_disease;Liver_disease;disease;FALSE
+59;Neo activa;Cancer;Cancer;Cancer;FALSE
+60;Enfermedad hepática;Liver_disease;Liver_disease;disease;FALSE
