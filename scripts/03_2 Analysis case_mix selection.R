@@ -40,10 +40,8 @@ case_prop <- df %>%
 
 write.xlsx(case_prop,here("Output","Tables","Case_mix_org.xlsx"))
 
-
 df <- df %>%
   mutate(
-    cluster = relevel(cluster, ref = "Lower complexity"),
     Home_based_PHC_org = relevel(Home_based_PHC_org, ref="UAB_consulta"),
     sex_female = case_when(sex_female=="Yes"~1,
                            sex_female=="No"~0)
@@ -92,13 +90,11 @@ df %>%
 # Distribution of patients across census units
 # ============================================================
 
-patients_per_UC <- df %>%
+df %>%
   count(
     Seccio_Censal,
     name = "n_patients"
-  )
-
-patients_per_UC %>%
+  )%>%
   summarise(
     n_UC = n(),
     min = min(n_patients),
@@ -111,7 +107,11 @@ patients_per_UC %>%
 
 #cuántas UC tienen muy pocos pacientes:
 
-patients_per_UC %>%
+df %>%
+  count(
+    Seccio_Censal,
+    name = "n_patients"
+  )%>%
   summarise(
     n_1 = sum(n_patients == 1),
     n_2_4 = sum(n_patients >= 2 & n_patients <= 4),
@@ -127,15 +127,22 @@ n_distinct(df$Seccio_Censal)
 # Census units by organisational model
 
 df %>%
-  distinct(
-    Seccio_Censal,
-    Home_based_PHC_org
-  ) %>%
   count(
     Home_based_PHC_org,
-    name = "n_UC"
+    Seccio_Censal,
+    name = "n_patients"
+  )%>%
+  summarise(
+    n_UC = n(),
+    Total_patiens = sum(n_patients),
+    min = min(n_patients),
+    Q1 = quantile(n_patients, 0.25),
+    median = median(n_patients),
+    mean = mean(n_patients),
+    Q3 = quantile(n_patients, 0.75),
+    max = max(n_patients),
+    .by = Home_based_PHC_org
   )
-
 
 # ============================================================
 # Step 4. Mean-center age
@@ -172,6 +179,7 @@ SES_UC <- df %>%
     Seccio_Censal,
     Index_SES
   )
+
 SES_mean <- mean(
   SES_UC$Index_SES,
   na.rm = TRUE
@@ -205,7 +213,6 @@ summary(df$Index_SES_z)
 # This model estimates between-census-unit heterogeneity
 # in phenotype membership before introducing covariates.
 
-library(mclogit)
 
 MM0 <- mblogit(
   formula =
@@ -269,8 +276,8 @@ MM1 <- mblogit(
   data = df
 )
 
-
 summary(MM1)
+mclogit:::getSummary.mblogit(MM1, alpha = 0.05)
 
 # ============================================================
 # MM0 vs MM1 - Proportional change in random-effect variance
@@ -368,6 +375,8 @@ MM2 <- mblogit(
 )
 
 summary(MM2)
+mclogit:::getSummary.mblogit(MM2, alpha = 0.05)
+
 
 # ============================================================
 # Compare census-unit random-effect variance: MM1 vs MM2
@@ -412,7 +421,7 @@ methods(class = class(MM2)[1])
 methods("predict")
 
 # ============================================================
-# MM2 - Check prediction using new data
+# MM2 - Check prediction using data
 # ============================================================
 # Create a copy of the analytical dataset and assign all
 # patients to the Traditional organisational model.
@@ -522,6 +531,7 @@ prob_MM2 <- prob_MM2 %>%
   )
 
 prob_MM2
+
 # ============================================================
 # MM2 - Cluster bootstrap for standardized probabilities
 # ============================================================
@@ -711,7 +721,7 @@ successful_boot <- n_distinct(
   boot_results$bootstrap
 )
 
-failed_boot <- B - successful_boot
+failed_boot <- 1000 - successful_boot
 
 successful_boot
 failed_boot
@@ -754,7 +764,6 @@ prob_MM2_CI <- boot_results %>%
     
     .groups = "drop"
   )
-
 
 # Combine original standardized probabilities with
 # bootstrap confidence intervals
@@ -811,21 +820,28 @@ Table_MM2 <- prob_MM2_final %>%
 
 Table_MM2
 
+write.xlsx(Table_MM2,here("Output","Tables","Table_cluster_probability.xlsx"))
 # ============================================================
 # MM2 - Pairwise differences in standardized probabilities
 # ============================================================
-# Calculate pairwise differences between organisational models
-# within each phenotype for every bootstrap replication.
+# Aim:
+#   Compare standardized probabilities of phenotype membership
+#   between the 4 home-based PHC organisational models.
 #
-# Because all probabilities within a bootstrap replication
-# originate from the same fitted model and standardized
-# population, their differences preserve the covariance
-# between estimates.
+# Inference:
+#   - Point estimates: original fully adjusted MM2 model
+#   - 95% CI: percentile census-unit cluster bootstrap
+#   - SE: SD of the bootstrap contrast distribution
+#   - P values: two-sided tests using bootstrap SEs
+#   - Multiplicity: Holm adjustment across the 6 pairwise
+#     comparisons within each phenotype
+#
+# Differences are expressed as percentage points (pp).
 # ============================================================
 
 
 # ------------------------------------------------------------
-# 1. Reshape bootstrap probabilities to wide format
+# Reshape bootstrap standardized probabilities
 # ------------------------------------------------------------
 
 boot_wide <- boot_results %>%
@@ -842,7 +858,8 @@ boot_wide <- boot_results %>%
 
 
 # ------------------------------------------------------------
-# 2. Calculate all 6 pairwise contrasts
+# Calculate all 6 pairwise contrasts
+# within each bootstrap replication
 # ------------------------------------------------------------
 
 boot_contrasts <- boot_wide %>%
@@ -876,10 +893,10 @@ boot_contrasts <- boot_wide %>%
 
 
 # ------------------------------------------------------------
-# 3. Obtain point estimates from the original MM2 model
+# Obtain point estimates from the original MM2 model
 # ------------------------------------------------------------
-# Bootstrap replicates are used for uncertainty.
-# Point estimates remain those obtained from the original model.
+# Bootstrap replicates are used to estimate uncertainty.
+# Point estimates remain those from the original fitted model.
 
 original_wide <- prob_MM2 %>%
   select(
@@ -891,6 +908,7 @@ original_wide <- prob_MM2 %>%
     names_from = Home_based_PHC_org,
     values_from = probability
   )
+
 
 contrasts_original <- original_wide %>%
   transmute(
@@ -922,7 +940,7 @@ contrasts_original <- original_wide %>%
 
 
 # ------------------------------------------------------------
-# 4. Obtain percentile bootstrap 95% CIs
+# Percentile cluster-bootstrap 95% CIs
 # ------------------------------------------------------------
 
 contrast_CI <- boot_contrasts %>%
@@ -948,42 +966,214 @@ contrast_CI <- boot_contrasts %>%
 
 
 # ------------------------------------------------------------
-# 5. Publication-ready contrasts
+# Bootstrap standard errors
+# ------------------------------------------------------------
+# The SD of the bootstrap distribution provides the bootstrap
+# SE for each pairwise difference.
+
+boot_SE <- boot_contrasts %>%
+  group_by(
+    cluster,
+    contrast
+  ) %>%
+  summarise(
+    boot_SE = sd(
+      difference,
+      na.rm = TRUE
+    ),
+    
+    n_boot = sum(
+      !is.na(difference)
+    ),
+    
+    .groups = "drop"
+  )
+
+
+# Check number of successful bootstrap estimates
+
+boot_SE %>%
+  arrange(n_boot)
+
+
+# ------------------------------------------------------------
+# Two-sided P values using bootstrap SEs
+# ------------------------------------------------------------
+
+contrast_tests <- contrasts_original %>%
+  left_join(
+    boot_SE,
+    by = c(
+      "cluster",
+      "contrast"
+    )
+  ) %>%
+  mutate(
+    z_boot = estimate / boot_SE,
+    
+    p_value = 2 * pnorm(
+      -abs(z_boot)
+    )
+  )
+
+
+# ------------------------------------------------------------
+# Holm multiplicity adjustment
+# ------------------------------------------------------------
+# Holm adjustment is applied separately within each phenotype,
+# corresponding to the 6 pairwise comparisons among the
+# 4 organisational models.
+
+contrast_tests <- contrast_tests %>%
+  group_by(cluster) %>%
+  mutate(
+    p_holm = p.adjust(
+      p_value,
+      method = "holm"
+    )
+  ) %>%
+  ungroup()
+
+
+# ------------------------------------------------------------
+# Combine estimates, bootstrap CIs, and adjusted P values
 # ------------------------------------------------------------
 
 contr_MM2_final <- contrasts_original %>%
   left_join(
     contrast_CI,
-    by = c("cluster", "contrast")
+    by = c(
+      "cluster",
+      "contrast"
+    )
+  ) %>%
+  left_join(
+    contrast_tests %>%
+      select(
+        cluster,
+        contrast,
+        boot_SE,
+        n_boot,
+        z_boot,
+        p_value,
+        p_holm
+      ),
+    by = c(
+      "cluster",
+      "contrast"
+    )
   ) %>%
   mutate(
+    
+    # Convert probabilities to percentage points
     difference_pp = estimate * 100,
     CI_low_pp = CI_low * 100,
     CI_high_pp = CI_high * 100,
+    boot_SE_pp = boot_SE * 100,
     
+    # Publication-ready estimate and CI
     result = sprintf(
       "%.1f (%.1f to %.1f)",
       difference_pp,
       CI_low_pp,
       CI_high_pp
+    ),
+    
+    # Publication-ready unadjusted P value
+    p_value_display = case_when(
+      p_value < 0.001 ~ "<.001",
+      TRUE ~ sprintf("%.3f", p_value)
+    ),
+    
+    # Publication-ready Holm-adjusted P value
+    p_holm_display = case_when(
+      p_holm < 0.001 ~ "<.001",
+      TRUE ~ sprintf("%.3f", p_holm)
     )
   )
 
 
-print(n=24,contr_MM2_final %>%
+# ------------------------------------------------------------
+# Inspect complete results
+# ------------------------------------------------------------
+
+print(
+  contr_MM2_final %>%
+    select(
+      cluster,
+      contrast,
+      difference_pp,
+      CI_low_pp,
+      CI_high_pp,
+      boot_SE_pp,
+      n_boot,
+      p_value,
+      p_holm
+    ),
+  n = 24
+)
+
+
+# ------------------------------------------------------------
+# Publication-ready eTable
+# ------------------------------------------------------------
+
+contr_MM2_table <- contr_MM2_final %>%
   select(
     cluster,
     contrast,
-    difference_pp,
-    CI_low_pp,
-    CI_high_pp,
-    result
-  ))
+    result,
+    p_holm_display
+  ) %>%
+  rename(
+    Phenotype = cluster,
+    Comparison = contrast,
+    `Difference, percentage points (95% bootstrap CI)` = result,
+    `Holm-adjusted P value` = p_holm_display
+  )%>%
+  mutate(
+    Comparison = recode(Comparison,
+      "UAB_consulta - Equip_Atdom" =
+        "Traditional team-based - Multidisciplinary home care unit",
+      
+      "UAB_consulta - Equip_Inf" =
+        "Traditional team-based - Nurse-led home care unit",
+      
+      "UAB_consulta - UAB_consulta_reforc" =
+        "Traditional team-based - Reinforced team-based",
+      
+      "Equip_Atdom - Equip_Inf" =
+        "Multidisciplinary home care unit - Nurse-led home care unit",
+      
+      "Equip_Atdom - UAB_consulta_reforc" =
+        "Multidisciplinary home care unit - Reinforced team-based",
+      
+      "Equip_Inf - UAB_consulta_reforc" =
+        "Nurse-led home care unit - Reinforced team-based"
+    )
+  )
+
+print(
+  contr_MM2_table,
+  n = 24
+)
 
 
 # ------------------------------------------------------------
-# 1. Prepare labels and ordering
+# Export complete analytical results
 # ------------------------------------------------------------
+
+write.xlsx(
+  contr_MM2_table,
+  here(
+    "Output",
+    "Tables",
+    "Contrasts_prob_cluster.xlsx"
+  ),
+  overwrite = TRUE
+)
+
+
 
 # ============================================================
 # Figure X - Standardized phenotype probabilities
@@ -996,9 +1186,9 @@ prob_MM2_plot <- prob_MM2_final %>%
     Home_based_PHC_org = recode(
       Home_based_PHC_org,
       "UAB_consulta" = "Traditional",
-      "UAB_consulta_reforc" = "Reinforced\ntraditional",
       "Equip_Atdom" = "Dedicated\nhome-care team",
-      "Equip_Inf" = "Nurse-led"
+      "Equip_Inf" = "Nurse-led",
+      "UAB_consulta_reforc" = "Reinforced\ntraditional"
     ),
     
     # Order organisational models
@@ -1006,9 +1196,10 @@ prob_MM2_plot <- prob_MM2_final %>%
       Home_based_PHC_org,
       levels = c(
         "Traditional",
-        "Reinforced\ntraditional",
         "Dedicated\nhome-care team",
-        "Nurse-led"
+        "Nurse-led",
+        "Reinforced\ntraditional"
+        
       )
     ),
     
@@ -1029,7 +1220,6 @@ prob_MM2_plot <- prob_MM2_final %>%
 
 
 
-
 Figure_case_mix <- ggplot(
   prob_MM2_plot,
   aes(
@@ -1040,7 +1230,7 @@ Figure_case_mix <- ggplot(
   
   # Point estimates
   geom_point(
-    size = 2.5
+    size = 3
   ) +
   
   # 95% cluster-bootstrap CIs
@@ -1049,8 +1239,8 @@ Figure_case_mix <- ggplot(
       ymin = CI_low_pct,
       ymax = CI_high_pct
     ),
-    width = 0.07,
-    linewidth = 0.5
+    width = 0.08,
+    linewidth = 0.8
   ) +
   
   # Phenotype panels
@@ -1067,9 +1257,9 @@ scale_x_continuous(
   breaks = 1:4,
   labels = c(
     "Traditional",
-    "Reinforced\ntraditional",
     "Dedicated\nhome-care team",
-    "Nurse-led"
+    "Nurse-led",
+    "Reinforced\ntraditional"
   ),
   
   # Increasing these limits creates margins at both sides,
@@ -1089,7 +1279,7 @@ scale_x_continuous(
   labs(
     x = NULL,
     y = "Standardized probability, %",
-    title = "Standardized Distribution of Home-Based Primary Care Phenotypes"
+    title = "Standardized Probabilities of Patient Phenotype Membership by Home-Based Primary Care Organizational Model"
   ) +
   
   theme_minimal(
@@ -1127,7 +1317,7 @@ scale_x_continuous(
     
     plot.title = element_text(
       colour = "black",
-      size = 11,
+      size = 13,
       hjust = 0
     ),
     
@@ -1212,80 +1402,14 @@ scale_x_continuous(
   )
 
 Figure_case_mix
-# ============================================================
-# Table displayed below Figure X
-# ============================================================
 
-Table_figure <- prob_MM2_plot %>%
-  mutate(
-    result = sprintf(
-      "%.1f (%.1f-%.1f)",
-      probability_pct,
-      CI_low_pct,
-      CI_high_pct
-    )
-  ) %>%
-  select(
-    Home_based_PHC_org,
-    cluster,
-    result
-  ) %>%
-  pivot_wider(
-    names_from = cluster,
-    values_from = result
-  ) %>%
-  arrange(Home_based_PHC_org)
-
-# Clean column names
-names(Table_figure) <- c(
-  "Organisational model",
-  "Lower complexity",
-  "Social vulnerability",
-  "High multimorbidity",
-  "Neurocognitive-functional dependency"
+ggsave(
+  filename = here("Output","Figures", "Figure_case_mix.png"),
+  plot = Figure_case_mix,
+  width = 297,
+  height = 210,
+  units = "mm",
+  dpi = 300,
+  bg = "white"
 )
 
-Table_figure
-
-# ============================================================
-# Convert table into graphical object
-# ============================================================
-
-table_grob <- gridExtra::tableGrob(
-  Table_figure,
-  rows = NULL,
-  theme = gridExtra::ttheme_minimal(
-    base_size = 9,
-    core = list(
-      fg_params = list(
-        hjust = 0,
-        x = 0.02
-      )
-    ),
-    colhead = list(
-      fg_params = list(
-        fontface = "bold",
-        hjust = 0,
-        x = 0.02
-      )
-    )
-  )
-)
-
-# ============================================================
-# Final figure: plot + table
-# ============================================================
-
-Figure_case_mix_final <-
-  Figure_case_mix /
-  patchwork::wrap_elements(
-    full = table_grob
-  ) +
-  plot_layout(
-    heights = c(
-      4,
-      1.15
-    )
-  )
-
-Figure_case_mix_final

@@ -224,6 +224,8 @@ famd_contributions <- res_famd_full$var$contrib[, 1:6] %>%
 
 famd_contributions
 
+write.xlsx(famd_contributions,here("Output","Cluster", "famd_contributions.xlsx"))
+
 # 15. FINAL FAMD FOR HCPC
 # ============================================================
 
@@ -481,22 +483,20 @@ hcpc_desc_quanti <- purrr::imap_dfr(
 
 hcpc_desc_quanti
 
-
 # Characterization of the 4 phenotypes
 
 metadata_dict_inicial <- read_csv2(
   here("data", "metadata_dict_inicial.csv")
 )
 
-# 1. Apply transformations FIRST
+# Apply transformations FIRST
 
-
-df_cluster_desc <- apply_all_transformations_inicial(
-  df_cluster,
-  metadata_dict_inicial
-)%>%
-  left_join(df_cluster[,c(1,46)],
-            by="ID")%>%
+df_cluster_desc <-df_cluster%>% #apply_all_transformations_inicial(
+  #df_cluster,
+  #metadata_dict_inicial
+#)%>%
+  #left_join(df_cluster[,c(1,46)],
+  #          by="ID")%>%
   mutate(
     cluster = factor(
       cluster,
