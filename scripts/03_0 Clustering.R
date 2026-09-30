@@ -187,7 +187,7 @@ famd_eigenvalues <- res_famd_full$eig %>%
 
 famd_eigenvalues
 
-write.xlsx(famd_eigenvalues,here("Output","Cluster","explained_var.RDS"))
+write.xlsx(famd_eigenvalues,here("Output","Cluster","explained_var.xlsx"))
 
 
 # 12. SCREE PLOT

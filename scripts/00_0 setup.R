@@ -38,6 +38,7 @@ library(factoextra)
 library(missMDA)
 library(pheatmap)
 library(broom)
+library(mclogit)
 
 
 
