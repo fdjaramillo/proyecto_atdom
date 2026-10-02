@@ -127,7 +127,7 @@ famd_sub_imputed <- imp_sub$completeObs
 
 # Fowlkes-Mallows index
   
-  fm_value <- fowlkes_mallows(
+fm_value <- fowlkes_mallows(
     comparison$cluster_original,
     comparison$cluster_resampled
   )
@@ -139,6 +139,8 @@ famd_sub_imputed <- imp_sub$completeObs
     comparison = list(comparison)
   )
 })
+
+saveRDS(fm_results,here("data","processed","Fowlkes_Mallows_results.rds"))
 
 # ============================================================
 # 5. Summary of cluster stability
