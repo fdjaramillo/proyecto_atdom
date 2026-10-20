@@ -39,6 +39,12 @@ library(missMDA)
 library(pheatmap)
 library(broom)
 library(mclogit)
+library(lme4)
+library(ordinal)
+library(MASS)
+
+
+
 
 
 
