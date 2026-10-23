@@ -1,6 +1,6 @@
-# ============================================================
+# ====
 # 03_0v2 Cluster case_mix selection analysis v2.R
-# ============================================================
+# ====
 
 source(here("scripts", "00_0 setup.R"))
 
@@ -51,13 +51,13 @@ df<- df %>%
 
 
 # 2. CREATE DATASET FOR CASE-MIX ANALYSIS
-
+names(df)
 TB_case_mix <- df %>%
   
   # Add variables from the original clinical database
   left_join(
     DF_Inicial %>%
-      select(
+      dplyr::select(
         ID,
         UP_ABS,
         GMA_PNIV,
@@ -97,7 +97,7 @@ variables_case_mix <- c(
 
 # 5. MISSING DATA BY PRIMARY CARE CENTER
 
-missing_case_mix <- TB_case_mix %>%
+TB_case_mix %>%
   group_by(
     UP_ABS,
     Home_based_PHC_org
@@ -112,13 +112,12 @@ missing_case_mix <- TB_case_mix %>%
     ),
     
     .groups = "drop"
-  )
+  )%>%
+  print(x, width = Inf)
 
-print(missing_case_mix, width = Inf)
-
-# ============================================================
+# ====
 # STEP 4. DEFINE CASE-MIX INDICATORS
-# ============================================================
+# ====
 
 TB_case_mix <- TB_case_mix %>%
   mutate(
@@ -137,9 +136,9 @@ TB_case_mix <- TB_case_mix %>%
     
   )
 
-# ============================================================
+# ====
 # STEP 7. CASE-MIX COMPARISON BY ORGANIZATIONAL MODEL
-# ============================================================
+# ====
 
 TB_case_mix <- TB_case_mix %>%
   mutate(
@@ -201,17 +200,13 @@ variables_case_mix_final <- c(
   "GMA_PNIV"
 )
 
-# ============================================================
+# ====
 # DESCRIPTIVE TABLE BY ORGANIZATIONAL MODEL
-# ============================================================
+# ====
 
-<<<<<<< HEAD
-names(TB_case_mix)
 
 df_cluster_desc <-TB_case_mix
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 case_mix_table <- descrTable(
   Home_based_PHC_org ~
     Social_positive +
@@ -221,14 +216,10 @@ case_mix_table <- descrTable(
   
   data = TB_case_mix,
   
-<<<<<<< HEAD
   include.miss = TRUE,
   show.all = FALSE,
   chisq.test.perm = TRUE,
-=======
-  include.miss = FALSE,
-  show.all = TRUE,
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
+
   show.n = TRUE,
   show.p.overall = TRUE,
   show.p.mul = FALSE,
@@ -236,7 +227,6 @@ case_mix_table <- descrTable(
   digits.p = 3
 )
 
-<<<<<<< HEAD
 export2md(case_mix_table,format = "html")
 
 export2xls(
@@ -245,25 +235,15 @@ export2xls(
 )
 
 
-=======
-export2md(
-  case_mix_table,
-  format = "html"
-)
-
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 TB_case_mix <- TB_case_mix %>%
   mutate(
     Edat_10 = (Edat - 85) / 10
   )
 
-<<<<<<< HEAD
+
 ### Modeling case-mix. ### 
 
 #Social
-=======
-library(lme4)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 
 MM_social <- glmer(
   Social_positive ~
@@ -285,12 +265,6 @@ MM_social <- glmer(
 summary(MM_social)
 VarCorr(MM_social)
 isSingular(MM_social)
-
-
-<<<<<<< HEAD
-=======
-library(emmeans)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 
 # Marginally standardized probabilities
 emm_social <- emmeans(
@@ -319,7 +293,7 @@ summary(
 )
 
 
-##baRTHEL
+##BARTHEL
 MM_functional <- glmer(
   Barthel_severe ~
     Home_based_PHC_org +
@@ -339,8 +313,6 @@ MM_functional <- glmer(
 
 summary(MM_functional)
 isSingular(MM_functional)
-
-
 
 # Marginally standardized probabilities
 emm_functional <- emmeans(
@@ -392,10 +364,6 @@ summary(MM_neuro)
 VarCorr(MM_neuro)
 isSingular(MM_neuro)
 
-<<<<<<< HEAD
-=======
-library(emmeans)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 
 emm_neuro <- emmeans(
   MM_neuro,
@@ -423,11 +391,7 @@ summary(
 )
 
 #complexity
-<<<<<<< HEAD
 
-=======
-library(ordinal)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 
 TB_case_mix <- TB_case_mix %>%
   mutate(
@@ -464,17 +428,12 @@ VarCorr(MM_complexity)
 # Number of observations
 nobs(MM_complexity)
 
-<<<<<<< HEAD
-=======
-library(dplyr)
-library(MASS)
-library(ordinal)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 
-# ============================================================
+
+# ====
 # CLINICAL COMPLEXITY (GMA_PNIV)
 # Marginal standardization and adjusted comparisons
-# ============================================================
+# ====
 
 # ------------------------------------------------------------
 # 1. Analytical sample
@@ -528,6 +487,21 @@ V <- V[
   drop = FALSE
 ]
 
+# Extract standard errors
+SE <- sqrt(diag(vcov(MM_complexity))[names(alpha)])
+
+# Calculate z statistics and P values
+z <- alpha / SE
+p <- 2 * pnorm(abs(z), lower.tail = FALSE)
+
+# Results
+data.frame(
+  Threshold = names(alpha),
+  Estimate = as.numeric(alpha),
+  Std_Error = as.numeric(SE),
+  z_value = as.numeric(z),
+  p_value = round(as.numeric(p),6)
+)
 
 # ------------------------------------------------------------
 # 3. Design matrices for marginal standardization
@@ -605,9 +579,9 @@ print(prob_GMA)
 rowSums(prob_GMA_raw)
 
 
-# ============================================================
+# ====
 # UNCERTAINTY ESTIMATION
-# ============================================================
+# ====
 
 # ------------------------------------------------------------
 # 5. Parametric simulation
@@ -686,9 +660,9 @@ GMA4_results <- data.frame(
 print(GMA4_results)
 
 
-# ============================================================
+# ====
 # CONTRASTS AGAINST TRADITIONAL TEAM-BASED
-# ============================================================
+# ====
 
 # ------------------------------------------------------------
 # 9. Absolute prevalence differences
@@ -871,12 +845,7 @@ case_mix_table_final <- case_mix_final %>%
 
 print(case_mix_table_final, width = Inf)
 
-<<<<<<< HEAD
-=======
-library(dplyr)
-library(emmeans)
 
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 # Extract comparisons with nominal 95% CI
 extract_contrasts <- function(emm, dimension) {
   
@@ -947,90 +916,56 @@ print(
   case_mix_contrasts
 )
 
-<<<<<<< HEAD
-
-
-# Prepare figure data
-levels(fig_case_mix$Dimension)
-fig_case_mix <- case_mix_contrasts %>%
-  mutate(
-=======
-library(dplyr)
-library(ggplot2)
 
 # Prepare figure data
 fig_case_mix <- case_mix_contrasts %>%
   dplyr::mutate(
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
     
     # Organizational model labels
-    Model = case_when(
+    Model = dplyr::case_when(
       grepl("Reinforced", Comparison) ~
-<<<<<<< HEAD
         "Reinforced Traditional",
       
       grepl("Nurse-led", Comparison) ~
         "Nurse-led",
       
       grepl("Multidisciplinary", Comparison) ~
-        "Multidisciplinary Team"
-=======
-        "Reinforced team-based",
+        "Multidisciplinary Team",
       
-      grepl("Nurse-led", Comparison) ~
-        "Nurse-led unit",
-      
-      grepl("Multidisciplinary", Comparison) ~
-        "Multidisciplinary unit"
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
+      TRUE ~ NA_character_
     ),
     
+    # Order organizational models
     Model = factor(
       Model,
       levels = c(
-<<<<<<< HEAD
         "Multidisciplinary Team",
         "Nurse-led",
         "Reinforced Traditional"
       )
     ),
     
-# Clinical dimensions
-    Dimension =  case_when(
-      Dimension=="Clinical complexity (GMA 4)" ~
-        "Hight commorbidity and complexity",
-      TRUE~Dimension),
-
-  Dimension =factor(
-=======
-        "Multidisciplinary unit",
-        "Nurse-led unit",
-        "Reinforced team-based"
-      )
+    # Rename clinical dimension
+    Dimension = dplyr::case_when(
+      Dimension == "Clinical complexity (GMA 4)" ~
+        "High comorbidity and complexity",
+      TRUE ~ as.character(Dimension)
     ),
     
-    # Clinical dimensions
+    # Order clinical dimensions
     Dimension = factor(
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
       Dimension,
       levels = c(
         "Social needs",
         "Functional dependency",
         "Neurodegenerative conditions",
-<<<<<<< HEAD
-        "Hight commorbidity and complexity"
-=======
-        "Clinical complexity (GMA 4)"
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
+        "High comorbidity and complexity"
       )
     )
   )
 
 # Forest plot
-<<<<<<< HEAD
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 Figure_2 <- ggplot(
   fig_case_mix,
   aes(
@@ -1039,23 +974,20 @@ Figure_2 <- ggplot(
   )
 ) +
   
-<<<<<<< HEAD
+
 # Reference line
-=======
-  # Reference line
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
-  geom_vline(
+
+geom_vline(
     xintercept = 0,
     linetype = "dashed",
     linewidth = 0.4,
     colour = "grey50"
   ) +
   
-<<<<<<< HEAD
+
 # Confidence intervals
-=======
+
   # Confidence intervals
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
   geom_segment(
     aes(
       x = CI_low_pp,
@@ -1066,31 +998,28 @@ Figure_2 <- ggplot(
     colour = "black"
   ) +
   
-<<<<<<< HEAD
+
 # Point estimates
-=======
+
   # Point estimates
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
-  geom_point(
+geom_point(
     size = 2.8,
     colour = "black"
   ) +
   
-<<<<<<< HEAD
+
 # Four panels
-=======
+
   # Four panels
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
   facet_wrap(
     ~ Dimension,
     ncol = 2
   ) +
   
-<<<<<<< HEAD
+
 # Common scale
-=======
+
   # Common scale
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
   scale_x_continuous(
     limits = c(-15, 20),
     breaks = seq(-15, 20, 5)
@@ -1128,7 +1057,7 @@ Figure_2 <- ggplot(
 
 Figure_2
 
-<<<<<<< HEAD
+
 ggsave(
   filename = here("Output", "Figures", "Standarized_probs.png"),
   plot = Figure_2,
@@ -1139,22 +1068,14 @@ ggsave(
 )
 
 
-=======
-library(dplyr)
-library(tibble)
-library(emmeans)
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
-
-# ============================================================
+# ====
 # FINAL CASE-MIX CONTRASTS TABLE
 # Holm correction within each clinical dimension
-# ============================================================
+# ====
 
 # Organizational models
-<<<<<<< HEAD
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
+
 modelos <- c(
   "Reinforced team-based",
   "Nurse-led unit",
@@ -1168,14 +1089,10 @@ modelos <- c(
 
 extract_contrasts <- function(emm, dimension) {
   
-<<<<<<< HEAD
+
 # Unadjusted comparisons against traditional
 
-  contr <- contrast(
-=======
-  # Unadjusted comparisons against traditional
   contr <- emmeans::contrast(
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
     emm,
     method = "trt.vs.ctrl",
     ref = 1,
@@ -1190,14 +1107,11 @@ extract_contrasts <- function(emm, dimension) {
     )
   )
   
-<<<<<<< HEAD
+
 # Verify comparison order
 
 stopifnot(
-=======
-  # Verify comparison order
-  stopifnot(
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
+
     nrow(res) == length(modelos),
     all(vapply(
       seq_along(modelos),
@@ -1245,10 +1159,7 @@ neuro_results <- extract_contrasts(
 # ------------------------------------------------------------
 
 # Extract organizational coefficients
-<<<<<<< HEAD
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 coef_names <- paste0(
   "Home_based_PHC_org",
   modelos
@@ -1257,10 +1168,7 @@ coef_names <- paste0(
 beta_GMA <- MM_complexity$beta[coef_names]
 
 # Variance-covariance matrix
-<<<<<<< HEAD
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 V_GMA <- as.matrix(vcov(MM_complexity))
 
 SE_GMA <- sqrt(
@@ -1304,11 +1212,8 @@ case_mix_contrasts_final <- bind_rows(
   GMA_results
 ) %>%
   
-<<<<<<< HEAD
+
 # Holm correction within each dimension
-=======
-  # Holm correction within each dimension
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
   group_by(Dimension) %>%
   mutate(
     p_Holm = p.adjust(
@@ -1326,11 +1231,8 @@ case_mix_contrasts_final <- bind_rows(
 case_mix_table_final <- case_mix_contrasts_final %>%
   mutate(
     
-<<<<<<< HEAD
+
 # Format absolute differences and 95% CI
-=======
-    # Format absolute differences and 95% CI
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
     Adjusted_difference = sprintf(
       "%.1f (%.1f to %.1f)",
       Difference_pp,
@@ -1338,11 +1240,8 @@ case_mix_table_final <- case_mix_contrasts_final %>%
       CI_high_pp
     ),
     
-<<<<<<< HEAD
+
 # P values
-=======
-    # P values
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
     P_nominal = ifelse(
       p_raw < 0.001,
       "<.001",
@@ -1364,24 +1263,18 @@ case_mix_table_final <- case_mix_contrasts_final %>%
   )
 
 # Display all results
-<<<<<<< HEAD
-
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 print(
   case_mix_table_final,
   n = Inf,
   width = Inf
 )
 
-<<<<<<< HEAD
+
 write_xlsx(
   case_mix_table_final,
   here("Output", "Tables", "case_mix_table_probs.xlsx")
 )
 
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
 case_mix_contrasts_final %>%
   group_by(Dimension) %>%
   summarise(
@@ -1390,7 +1283,3 @@ case_mix_contrasts_final %>%
     n_significant_Holm = sum(p_Holm < 0.05),
     .groups = "drop"
   )
-<<<<<<< HEAD
-
-=======
->>>>>>> 6b81490f8f8caded55596882c08e38665f989792
