@@ -61,7 +61,6 @@ Table_2_by_org_inicial <- descrTable(
   extra.labels = c("", "", "", "")
 )
 
-export2md(Table_2_by_org_inicial, format = "html")
 
 export2html(
   Table_2_by_org_inicial,

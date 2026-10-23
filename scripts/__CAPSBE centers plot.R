@@ -1,6 +1,5 @@
 ABS_sel<-readRDS(here("data", "SF", "ABS_sel_SF.rds"))%>%
   filter(NOMABS %in% c("Barcelona - 02C","Barcelona - 02E","Barcelona - 04C"))
-)
 
 nodes <- st_read(here("data", "external", "BCN_GrafVial_SHP", "BCN_GrafVial_Nodes_ETRS89_SHP.shp"),
                  quiet = TRUE)
