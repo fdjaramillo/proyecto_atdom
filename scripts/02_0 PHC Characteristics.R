@@ -28,6 +28,7 @@ Central_res<- read.csv2(here("data","external","DADES_CENTRAL_RESULTATS_2024.csv
   filter(Indicador %in% c(
                           # Demografía y posición socioeconómica
     "Població assignada",
+    "Import del contracte per persona assignada",
     "Percentatge de persones ateses",
     "Població adulta major de 65 anys",
     "Percentatge de persones ateses amb nivell socioeconòmic molt baix",
@@ -120,7 +121,8 @@ Central_table1 <- Central_res %>%
       (
         Indicador %in% c(
           "Índex del proveïdor assistencial principal anual",
-          "Accessibilitat a 5 dies"
+          "Accessibilitat a 5 dies",
+          "Import del contracte per persona assignada"
         ) &
           Grup_edat == "Total"
       ) |
@@ -171,6 +173,9 @@ Table1 <- Central_table1 %>%
       Indicador == "Percentatge de persones ateses" ~
         paste0("Perc_Population_attended_", age_suffix),
       
+      Indicador == "Import del contracte per persona assignada" ~
+        "Primary care funding per assigned person, €",
+      
       Indicador == "Percentatge de persones ateses amb nivell socioeconòmic molt baix" ~
         paste0("Very_low_SES_", age_suffix),
       
@@ -213,7 +218,7 @@ Table1 <- Central_table1 %>%
   
   filter(!is.na(variable)) %>%
   
-  select(
+  dplyr::select(
     UP_ABS,
     Centre_Territori,
     Home_based_PHC_org,
@@ -301,11 +306,12 @@ Table1_PHC_pub <- Table1 %>%
     by = "UP_ABS"
   ) %>%
   
-  select(
+  dplyr::select(
     UP_ABS,
     
     # Population structure
     Assigned_population_Total,
+    'Primary care funding per assigned person, €',
     Perc_Population_attended_65plus,
     Population_65_74_pct,
     Population_75_84_pct,
@@ -452,4 +458,27 @@ Table1_PHC_pub <- Table1 %>%
 
 
 write.xlsx(Table1_PHC_pub , here("Output","Tables","Table1_PHC_pub.xlsx"))
+
+names(unitats_cens_sel)
+
+unitats_cens_sel %>%
+  group_by(UP_ABS) %>%
+  summarise(
+    n_secciones = n_distinct(codi_seccio_censal),
+    .groups = "drop"
+  ) %>%
+  arrange(UP_ABS)
+
+##KM2 por centro
+
+ABS_sel<-readRDS(here("data", "SF", "ABS_sel_SF.rds"))
+
+ABS_sel$area_m2  <- as.numeric(st_area(ABS_sel))   # m²
+ABS_sel$area_km2 <- round(ABS_sel$area_m2 / 1e6,2)           # km²
+
+# Ver resultado ordenado
+ABS_sel |>
+  st_drop_geometry() |>
+  dplyr::select(NOMABS, area_km2) |>
+  dplyr::arrange(NOMABS)
 
