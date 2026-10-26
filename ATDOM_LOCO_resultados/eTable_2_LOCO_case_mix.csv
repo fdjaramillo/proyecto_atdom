@@ -1,0 +1,13 @@
+"Dimension","Organizational model","Full-sample difference (pp)","LOCO difference range (pp)","Maximum absolute change (pp)","Estimable exclusions","Direction reversals"
+"Barthel_severe","Multidisciplinary unit",0.85,"-1.64 to 2.95",2.48,7,2
+"Barthel_severe","Nurse-led unit",-1.49,"-2.69 to 0.16",1.65,6,1
+"Barthel_severe","Reinforced team-based",0.93,"-2.46 to 3.54",3.39,7,1
+"Dementia_parkinson","Multidisciplinary unit",-4.72,"-8.65 to -2.10",3.94,7,0
+"Dementia_parkinson","Nurse-led unit",1.39,"-1.06 to 3.40",2.45,6,1
+"Dementia_parkinson","Reinforced team-based",1.36,"-1.25 to 3.23",2.61,7,2
+"GMA_PNIV (level 4)","Multidisciplinary unit",-9.32,"-15.65 to -4.60",6.33,7,0
+"GMA_PNIV (level 4)","Nurse-led unit",-2.19,"-5.16 to 0.22",2.97,6,1
+"GMA_PNIV (level 4)","Reinforced team-based",0.48,"-3.14 to 4.35",3.87,7,2
+"Social_positive","Multidisciplinary unit",-10.56,"-12.75 to -6.91",3.65,7,0
+"Social_positive","Nurse-led unit",-1.79,"-3.05 to -0.61",1.26,6,0
+"Social_positive","Reinforced team-based",-5.41,"-7.14 to -3.07",2.34,7,0

@@ -24,7 +24,6 @@ df<-df%>%
   left_join(SES,
             by="Seccio_Censal")
 
-
 SES_UC <- df %>%
   distinct(
     Seccio_Censal,
@@ -199,6 +198,9 @@ variables_case_mix_final <- c(
   "Dementia_parkinson",
   "GMA_PNIV"
 )
+
+saveRDS(TB_case_mix,here("data","processed","TB_case_mix"))
+
 
 # ====
 # DESCRIPTIVE TABLE BY ORGANIZATIONAL MODEL
