@@ -71,3 +71,34 @@ export2xls(
   Table_2_by_org_inicial,
   file = here("Output", "Tables", "Table_2_by_org_inicial.xlsx")
 )
+
+# Descriptiva Equip_Atdom, Equip_Inf, UAB_consulta y UAB_consulta_reforç
+names(TB_Descrip)
+
+Table_by_PHC_inicial <- descrTable(
+  PHC_name ~ . - ID,
+  max.ylev = 7,
+  data = TB_Descrip,
+  show.all = F,
+  chisq.test.perm = T,
+  method = 4,
+  hide.no = "no",
+  include.miss = T,
+  extra.labels = c("", "", "", "")
+)
+
+names(DF_Inicial)
+
+export2md(Table_by_PHC_inicial, format = "html")
+
+
+export2html(
+  Table_by_PHC_inicial,
+  file = here("Output", "Tables", "Table_by_PHC_inicial.html")
+)
+
+export2xls(
+  Table_by_PHC_inicial,
+  file = here("Output", "Tables", "Table_by_PHC_inicial.xlsx")
+)
+
